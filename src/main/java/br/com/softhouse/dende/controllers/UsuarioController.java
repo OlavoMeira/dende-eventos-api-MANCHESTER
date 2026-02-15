@@ -10,6 +10,7 @@ import br.com.dende.softhouse.annotations.request.PathVariable;
 import br.com.dende.softhouse.process.route.ResponseEntity;
 import br.com.softhouse.dende.model.Usuario;
 import br.com.softhouse.dende.repositories.Repositorio;
+import java.util.Collection;
 
 @Controller
 @RequestMapping(path = "/usuarios")
@@ -23,16 +24,22 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<String> cadastroUsuario(@RequestBody Usuario usuario){
-        return ResponseEntity.ok("Usuario " + usuario.getEmail() + " registrado com sucesso!");
+        // Agora o controlador realmente usa o repositório para salvar
+        repositorio.salvarUsuario(usuario); 
+        return ResponseEntity.ok("Usuario " + usuario.getNome() + " registrado com sucesso!");
     }
 
     @GetMapping
-    public ResponseEntity<String> getUsuario() {
-        return ResponseEntity.ok("Empty");
+    public ResponseEntity<Collection<Usuario>> getUsuarios() {
+        // Retorna a lista de usuários salvos no repositório
+        return ResponseEntity.ok(repositorio.listarUsuarios());
     }
 
     @PutMapping(path = "/{usuarioId}")
     public ResponseEntity<String> alterarUsuario(@PathVariable(parameter = "usuarioId") long usuarioId, @RequestBody Usuario usuario) {
-        return ResponseEntity.ok("Usuario " + usuario.getEmail() + " do usuarioId = " + usuarioId + " alterado com sucesso!");
+        // Atualiza os dados do usuário usando o ID vindo da URL
+        usuario.setId(usuarioId);
+        repositorio.salvarUsuario(usuario);
+        return ResponseEntity.ok("Usuario " + usuario.getNome() + " (ID: " + usuarioId + ") alterado com sucesso!");
     }
 }

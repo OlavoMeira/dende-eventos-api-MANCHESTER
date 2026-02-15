@@ -5,12 +5,13 @@ import br.com.softhouse.dende.model.Usuario;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
 
 public class Repositorio {
 
     private static Repositorio instance = new Repositorio();
-    private final Map<String, Usuario> usuariosComum;
-    private final Map<String, Organizador> organizadores;
+    private final Map<Long, Usuario> usuariosComum; // Mudamos para Long para usar o ID
+    private final Map<Long, Organizador> organizadores;
 
     private Repositorio() {
         this.usuariosComum = new HashMap<>();
@@ -21,4 +22,25 @@ public class Repositorio {
         return instance;
     }
 
+    // Métodos para Usuários
+    public void salvarUsuario(Usuario usuario) {
+        usuariosComum.put(usuario.getId(), usuario);
+    }
+
+    public Usuario buscarUsuarioPorId(Long id) {
+        return usuariosComum.get(id);
+    }
+
+    public Collection<Usuario> listarUsuarios() {
+        return usuariosComum.values();
+    }
+
+    // Métodos para Organizadores
+    public void salvarOrganizador(Organizador organizador) {
+        organizadores.put(organizador.getId(), organizador);
+    }
+
+    public Organizador buscarOrganizadorPorId(Long id) {
+        return organizadores.get(id);
+    }
 }
