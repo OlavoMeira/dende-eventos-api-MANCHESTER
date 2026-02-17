@@ -10,7 +10,7 @@ import java.util.Collection;
 public class Repositorio {
 
     private static Repositorio instance = new Repositorio();
-    private final Map<Long, Usuario> usuariosComum; // Mudamos para Long para usar o ID
+    private final Map<Long, Usuario> usuariosComum;
     private final Map<Long, Organizador> organizadores;
 
     private Repositorio() {
@@ -35,7 +35,7 @@ public class Repositorio {
         return usuariosComum.values();
     }
 
-    // Métodos para Organizadores
+    
     public void salvarOrganizador(Organizador organizador) {
         organizadores.put(organizador.getId(), organizador);
     }

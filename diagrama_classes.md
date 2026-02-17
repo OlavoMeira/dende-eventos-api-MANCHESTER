@@ -3,6 +3,8 @@ classDiagram
     class Usuario {
         -Long id
         -String nome
+        -LocalDate dataNascimento
+        -String sexo
         -String email
         -String senha
         -Boolean ativo
@@ -13,29 +15,42 @@ classDiagram
     class Organizador {
         -Long id
         -String nome
-        -String cnpj
+        -LocalDate dataNascimento
+        -String sexo
         -String email
         -Boolean ativo
-        +cadastrarEvento()
-        +editarEvento()
+    }
+
+    class Empresa {
+        -String cnpj
+        -String razaoSocial
+        -String nomeFantasia
+        -LocalDate dataAbertura
     }
 
     class Evento {
         -Long id
         -String titulo
         -String descricao
-        -LocalDateTime dataHora
+        -String paginaWeb
+        -LocalDateTime dataInicio
+        -LocalDateTime dataFim
         -String local
+        -Double precoUnitarioIngresso
+        -Double taxaCancelamento
+        -Integer capacidadeMaxima
         -StatusEvento status
+        -TipoEvento tipo
         +ativar()
         +desativar()
     }
 
     class Ingresso {
         -Long id
-        -Double preco
+        -Double preco Pago
         -LocalDateTime dataCompra
         -StatusIngresso status
+        -String emailComprador
     }
 
     class StatusEvento {
@@ -52,7 +67,21 @@ classDiagram
         UTILIZADO
     }
 
+    class TipoEvento {
+        <<enumeration>>
+        SOCIAL
+        CORPORATIVO
+        ACADEMICO
+        CULTURAL_ENTRETENIMENTO
+        RELIGIOSO
+        ESPORTIVO
+        FEIRA
+        CONGRESSO
+    }
+
+    Organizador "1" -- "1" Empresa : pertence a
     Organizador "1" --> "0..*" Evento : cria
     Evento "1" --> "0..*" Ingresso : gera
-    Usuario "1" --> "0..*" Ingresso : possui
+    Evento "0..1" --> "0..*" Evento : possui (sub-eventos)
+    Usuario "1" --> "0..*" Ingresso : compra
 ```
