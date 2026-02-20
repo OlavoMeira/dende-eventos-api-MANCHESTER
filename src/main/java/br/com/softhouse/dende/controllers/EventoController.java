@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping(path = "/organizadores/{organizadorId}/eventos")
+@RequestMapping(path = "/organizadores/eventos")
 public class EventoController {
 
     private final Repositorio repositorio;
@@ -26,9 +26,9 @@ public class EventoController {
         this.repositorio = Repositorio.getInstance();
     }
 
-    @PostMapping
+    @PostMapping(path = "/{organizadorId}")
     public ResponseEntity<String> cadastrarEvento(
-            @PathVariable(parameter = "organizadorId") long organizadorId,
+            @PathVariable(parameter = "organizadorId") long organizadorId,  // Agora vem do método
             @RequestBody Evento evento) {
 
         Optional<Organizador> organizadorOpt = repositorio.buscarOrganizadorPorId(organizadorId);
@@ -96,9 +96,9 @@ public class EventoController {
         return ResponseUtils.ok("Evento " + evento.getNome() + " cadastrado com sucesso! ID: " + evento.getId());
     }
 
-    @PutMapping(path = "/{eventoId}")
+    @PutMapping(path = "/{organizadorId}/{eventoId}")
     public ResponseEntity<String> alterarEvento(
-            @PathVariable(parameter = "organizadorId") long organizadorId,
+            @PathVariable(parameter = "organizadorId") long organizadorId,  // Vem do método
             @PathVariable(parameter = "eventoId") long eventoId,
             @RequestBody Evento evento) {
 
@@ -159,7 +159,7 @@ public class EventoController {
         return ResponseUtils.ok("Evento " + evento.getNome() + " alterado com sucesso!");
     }
 
-    @PatchMapping(path = "/{eventoId}/{status}")
+    @PatchMapping(path = "/{organizadorId}/{eventoId}/{status}")
     public ResponseEntity<String> alterarStatusEvento(
             @PathVariable(parameter = "organizadorId") long organizadorId,
             @PathVariable(parameter = "eventoId") long eventoId,
@@ -205,7 +205,7 @@ public class EventoController {
         }
     }
 
-    @GetMapping
+    @GetMapping(path = "/{organizadorId}")
     public ResponseEntity<Object> listarEventosDoOrganizador(
             @PathVariable(parameter = "organizadorId") long organizadorId) {
 
