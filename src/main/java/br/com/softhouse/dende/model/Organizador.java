@@ -13,13 +13,13 @@ public class Organizador {
     private String senha;
     private boolean ativo;
 
-    private String cnpj;
-    private String razaoSocial;
-    private String nomeFantasia;
+    // Ian fiz a retirada dos campos cnpj, razaoSocial, nomeFantasia  de dentro  da classe organizador.
+    private Empresa empresa;
 
     public Organizador() {
         this.ativo = true;
     }
+
 
     public Organizador(String nome, LocalDate dataNascimento, String sexo, String email,
                        String senha, String cnpj, String razaoSocial, String nomeFantasia) {
@@ -28,26 +28,27 @@ public class Organizador {
         this.sexo = sexo;
         this.email = email;
         this.senha = senha;
-        this.cnpj = cnpj;
-        this.razaoSocial = razaoSocial;
-        this.nomeFantasia = nomeFantasia;
         this.ativo = true;
+
+        //  Ian Fiz uma grantia para que o objeto só seja criado se o cnpj existir. 
+        if (cnpj != null && !cnpj.trim().isEmpty()) {
+            this.empresa = new Empresa(cnpj, razaoSocial, nomeFantasia, null);
+        }
     }
 
     public String getIdadeCompleta() {
         if (dataNascimento == null) return "";
-
         LocalDate hoje = LocalDate.now();
         Period periodo = Period.between(dataNascimento, hoje);
-
         return String.format("%d anos, %d meses e %d dias",
                 periodo.getYears(), periodo.getMonths(), periodo.getDays());
     }
 
     public boolean isEmpresa() {
-        return cnpj != null && !cnpj.isEmpty();
+        return this.empresa != null && this.empresa.getCnpj() != null;
     }
 
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -69,14 +70,21 @@ public class Organizador {
     public boolean isAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
-    public String getCnpj() { return cnpj; }
-    public void setCnpj(String cnpj) { this.cnpj = cnpj; }
+    public Empresa getEmpresa() { return empresa; }
+    public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
 
-    public String getRazaoSocial() { return razaoSocial; }
-    public void setRazaoSocial(String razaoSocial) { this.razaoSocial = razaoSocial; }
 
-    public String getNomeFantasia() { return nomeFantasia; }
-    public void setNomeFantasia(String nomeFantasia) { this.nomeFantasia = nomeFantasia; }
+    public String getCnpj() { 
+        return (empresa != null) ? empresa.getCnpj() : null; 
+    }
+
+    public String getRazaoSocial() { 
+        return (empresa != null) ? empresa.getRazaoSocial() : null; 
+    }
+
+    public String getNomeFantasia() { 
+        return (empresa != null) ? empresa.getNomeFantasia() : null; 
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -97,8 +105,7 @@ public class Organizador {
                 "id=" + id +
                 ", nome='" + nome + '\'' +
                 ", email='" + email + '\'' +
-                ", ativo=" + ativo +
-                ", cnpj='" + cnpj + '\'' +
+                ", empresa=" + (isEmpresa() ? empresa.getCnpj() : "N/A") +
                 '}';
     }
 }

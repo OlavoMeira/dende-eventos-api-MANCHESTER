@@ -23,7 +23,8 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<String> cadastroUsuario(@RequestBody Usuario usuario) {
-        // Validar campos obrigatórios
+
+        // Validação dos campos obrigatoria 
         if (usuario.getNome() == null || usuario.getNome().trim().isEmpty()) {
             return ResponseUtils.badRequest("Nome é obrigatório");
         }

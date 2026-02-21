@@ -149,7 +149,7 @@ public class Repositorio {
     }
 
     public List<Ingresso> listarIngressosDoUsuario(Long usuarioId) {
-        LocalDateTime agora = LocalDateTime.now();
+        
 
         return ingressos.values().stream()
                 .filter(i -> i.getUsuario() != null && i.getUsuario().getId().equals(usuarioId))

@@ -4,7 +4,6 @@ import br.com.dende.softhouse.annotations.Controller;
 import br.com.dende.softhouse.annotations.request.GetMapping;
 import br.com.dende.softhouse.annotations.request.RequestMapping;
 import br.com.dende.softhouse.process.route.ResponseEntity;
-import br.com.softhouse.dende.model.Evento;
 import br.com.softhouse.dende.repositories.Repositorio;
 
 import java.util.HashMap;

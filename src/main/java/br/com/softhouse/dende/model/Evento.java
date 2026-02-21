@@ -12,14 +12,14 @@ import java.util.Objects;
 public class Evento {
     private Long id;
     private String nome;
-    private String paginaWeb;
+    private String paginaWeb; // Alinhado: Use "paginaWeb" no Postman
     private String descricao;
     private LocalDateTime dataInicio;
-    private LocalDateTime dataFim;
+    private LocalDateTime dataFim; // Alinhado: Use "dataFim" no Postman
     private TipoEvento tipoEvento;
     private ModalidadeEvento modalidade;
     private String local;
-    private Integer capacidadeMaxima;
+    private Integer capacidadeMaxima; // Alinhado: Use "capacidadeMaxima" no Postman
     private Double precoUnitarioIngresso;
     private Double taxaCancelamento;
     private boolean ativo;
@@ -29,11 +29,18 @@ public class Evento {
     private List<Evento> subEventos = new ArrayList<>();
     private List<Ingresso> ingressos = new ArrayList<>();
 
+    // Construtor corrigido com valores padrão para evitar erros de cálculo (NullPointer)
     public Evento() {
         this.ativo = true;
+        this.capacidadeMaxima = 0;
+        this.precoUnitarioIngresso = 0.0;
+        this.taxaCancelamento = 0.0;
     }
 
     public boolean isLotado() {
+        // Proteção: se capacidade for 0 ou nula, considera lotado para evitar erros
+        if (capacidadeMaxima == null || capacidadeMaxima <= 0) return true;
+
         long ingressosAtivos = ingressos.stream()
                 .filter(i -> i.getStatus() == br.com.softhouse.dende.enums.StatusIngresso.ATIVO)
                 .count();
@@ -41,43 +48,56 @@ public class Evento {
     }
 
     public boolean isFinalizado() {
+        if (dataFim == null) return false;
         return dataFim.isBefore(LocalDateTime.now());
     }
 
     public boolean isEmAndamento() {
+        if (dataInicio == null || dataFim == null) return false;
         LocalDateTime agora = LocalDateTime.now();
         return agora.isAfter(dataInicio) && agora.isBefore(dataFim);
     }
 
     public boolean isValidoParaCadastro() {
+        if (dataInicio == null || dataFim == null) return false;
+        
         LocalDateTime agora = LocalDateTime.now();
 
+        // Regra: Não pode criar evento no passado
         if (dataInicio.isBefore(agora)) {
             return false;
         }
 
+        // Regra: Fim deve ser após o início
         if (dataFim.isBefore(dataInicio)) {
             return false;
         }
 
+        // Regra: Duração mínima de 30 minutos
         Duration duracao = Duration.between(dataInicio, dataFim);
         return duracao.toMinutes() >= 30;
     }
 
     public void adicionarIngresso(Ingresso ingresso) {
+        if (ingressos == null) {
+            ingressos = new ArrayList<>();
+        }
         ingressos.add(ingresso);
     }
 
     public int getIngressosVendidos() {
+        if (ingressos == null) return 0;
         return (int) ingressos.stream()
                 .filter(i -> i.getStatus() == br.com.softhouse.dende.enums.StatusIngresso.ATIVO)
                 .count();
     }
 
     public int getVagasDisponiveis() {
+        if (capacidadeMaxima == null) return 0;
         return capacidadeMaxima - getIngressosVendidos();
     }
 
+    // --- Getters e Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -106,13 +126,13 @@ public class Evento {
     public void setLocal(String local) { this.local = local; }
 
     public Integer getCapacidadeMaxima() { return capacidadeMaxima; }
-    public void setCapacidadeMaxima(Integer capacidadeMaxima) { this.capacidadeMaxima = capacidadeMaxima; }
+    public void setCapacidadeMaxima(Integer capacidadeMaxima) { this.capacidadeMaxima = (capacidadeMaxima != null) ? capacidadeMaxima : 0; }
 
     public Double getPrecoUnitarioIngresso() { return precoUnitarioIngresso; }
-    public void setPrecoUnitarioIngresso(Double precoUnitarioIngresso) { this.precoUnitarioIngresso = precoUnitarioIngresso; }
+    public void setPrecoUnitarioIngresso(Double precoUnitarioIngresso) { this.precoUnitarioIngresso = (precoUnitarioIngresso != null) ? precoUnitarioIngresso : 0.0; }
 
     public Double getTaxaCancelamento() { return taxaCancelamento; }
-    public void setTaxaCancelamento(Double taxaCancelamento) { this.taxaCancelamento = taxaCancelamento; }
+    public void setTaxaCancelamento(Double taxaCancelamento) { this.taxaCancelamento = (taxaCancelamento != null) ? taxaCancelamento : 0.0; }
 
     public boolean isAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }

@@ -1,8 +1,7 @@
 package br.com.softhouse.dende.utils;
 
 import br.com.dende.softhouse.process.route.ResponseEntity;
-import java.util.HashMap;
-import java.util.Map;
+
 
 public class ResponseUtils {
 
