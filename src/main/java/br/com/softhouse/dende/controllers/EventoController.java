@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping(path = "/organizadores/eventos")
+@RequestMapping(path = "/organizadores")
 public class EventoController {
 
     private final Repositorio repositorio;
@@ -26,7 +26,7 @@ public class EventoController {
         this.repositorio = Repositorio.getInstance();
     }
 
-    @PostMapping(path = "/{organizadorId}")
+    @PostMapping(path = "/{organizadorId}/eventos")
     public ResponseEntity<String> cadastrarEvento(
             @PathVariable(parameter = "organizadorId") long organizadorId,  // Agora vem do método
             @RequestBody Evento evento) {
@@ -62,6 +62,10 @@ public class EventoController {
         if (evento.getCapacidadeMaxima() == null || evento.getCapacidadeMaxima() <= 0) {
             return ResponseUtils.badRequest("Capacidade máxima deve ser maior que zero");
         }
+        if (evento.getPrecoUnitarioIngresso() == null) {
+            return ResponseUtils.badRequest("Preço do ingresso é obrigatório");
+        }
+
 
         // Validar datas do evento
         LocalDateTime agora = LocalDateTime.now();
@@ -96,7 +100,7 @@ public class EventoController {
         return ResponseUtils.ok("Evento " + evento.getNome() + " cadastrado com sucesso! ID: " + evento.getId());
     }
 
-    @PutMapping(path = "/{organizadorId}/{eventoId}")
+    @PutMapping(path = "/{organizadorId}/eventos/{eventoId}")
     public ResponseEntity<String> alterarEvento(
             @PathVariable(parameter = "organizadorId") long organizadorId,  // Vem do método
             @PathVariable(parameter = "eventoId") long eventoId,
@@ -159,7 +163,7 @@ public class EventoController {
         return ResponseUtils.ok("Evento " + evento.getNome() + " alterado com sucesso!");
     }
 
-    @PatchMapping(path = "/{organizadorId}/{eventoId}/{status}")
+    @PatchMapping(path = "/{organizadorId}/eventos/{eventoId}/{status}")
     public ResponseEntity<String> alterarStatusEvento(
             @PathVariable(parameter = "organizadorId") long organizadorId,
             @PathVariable(parameter = "eventoId") long eventoId,
@@ -205,7 +209,7 @@ public class EventoController {
         }
     }
 
-    @GetMapping(path = "/{organizadorId}")
+    @GetMapping(path = "/{organizadorId}/eventos")
     public ResponseEntity<Object> listarEventosDoOrganizador(
             @PathVariable(parameter = "organizadorId") long organizadorId) {
 

@@ -88,11 +88,6 @@ public class IngressoController {
             // Criar ingresso para o evento principal
             Ingresso ingressoPrincipal = new Ingresso(usuario, eventoPrincipal, eventoPrincipal.getPrecoUnitarioIngresso());
             repositorio.salvarIngresso(ingressoPrincipal);
-        } else {
-            // Validar valor pago para evento sem principal
-            if (Math.abs(evento.getPrecoUnitarioIngresso() - totalPago) > 0.01) {
-                return ResponseUtils.badRequest("Valor pago incorreto. O valor do ingresso é: " + evento.getPrecoUnitarioIngresso());
-            }
         }
 
         // Criar ingresso para o evento atual
