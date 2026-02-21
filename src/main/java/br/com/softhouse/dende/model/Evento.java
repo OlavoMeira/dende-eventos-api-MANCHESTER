@@ -129,7 +129,9 @@ public class Evento {
     public void setCapacidadeMaxima(Integer capacidadeMaxima) { this.capacidadeMaxima = (capacidadeMaxima != null) ? capacidadeMaxima : 0; }
 
     public Double getPrecoUnitarioIngresso() { return precoUnitarioIngresso; }
-    public void setPrecoUnitarioIngresso(Double precoUnitarioIngresso) { this.precoUnitarioIngresso = (precoUnitarioIngresso != null) ? precoUnitarioIngresso : 0.0; }
+    public void setPrecoUnitarioIngresso(Double precoUnitarioIngresso) {
+        this.precoUnitarioIngresso = precoUnitarioIngresso;
+    }
 
     public Double getTaxaCancelamento() { return taxaCancelamento; }
     public void setTaxaCancelamento(Double taxaCancelamento) { this.taxaCancelamento = (taxaCancelamento != null) ? taxaCancelamento : 0.0; }
