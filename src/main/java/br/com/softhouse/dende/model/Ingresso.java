@@ -39,29 +39,61 @@ public class Ingresso {
         }
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Usuario getUsuario() { return usuario; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public Usuario getUsuario() {
+        return usuario;
+    }
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 
-    public Evento getEvento() { return evento; }
-    public void setEvento(Evento evento) { this.evento = evento; }
+    public Evento getEvento() {
+        return evento;
+    }
+    public void setEvento(Evento evento) {
+        this.evento = evento;
+    }
 
-    public LocalDateTime getDataCompra() { return dataCompra; }
-    public void setDataCompra(LocalDateTime dataCompra) { this.dataCompra = dataCompra; }
+    public LocalDateTime getDataCompra() {
+        return dataCompra;
+    }
+    public void setDataCompra(LocalDateTime dataCompra) {
+        this.dataCompra = dataCompra;
+    }
 
-    public LocalDateTime getDataCancelamento() { return dataCancelamento; }
-    public void setDataCancelamento(LocalDateTime dataCancelamento) { this.dataCancelamento = dataCancelamento; }
+    public LocalDateTime getDataCancelamento() {
+        return dataCancelamento;
+    }
+    public void setDataCancelamento(LocalDateTime dataCancelamento) {
+        this.dataCancelamento = dataCancelamento;
+    }
 
-    public Double getValorPago() { return valorPago; }
-    public void setValorPago(Double valorPago) { this.valorPago = valorPago; }
+    public Double getValorPago() {
+        return valorPago;
+    }
+    public void setValorPago(Double valorPago) {
+        this.valorPago = valorPago;
+    }
 
-    public Double getValorReembolsado() { return valorReembolsado; }
-    public void setValorReembolsado(Double valorReembolsado) { this.valorReembolsado = valorReembolsado; }
+    public Double getValorReembolsado() {
+        return valorReembolsado;
+    }
+    public void setValorReembolsado(Double valorReembolsado) {
+        this.valorReembolsado = valorReembolsado;
+    }
 
-    public StatusIngresso getStatus() { return status; }
-    public void setStatus(StatusIngresso status) { this.status = status; }
+    public StatusIngresso getStatus() {
+        return status;
+    }
+    public void setStatus(StatusIngresso status) {
+        this.status = status;
+    }
 
     @Override
     public boolean equals(Object o) {
