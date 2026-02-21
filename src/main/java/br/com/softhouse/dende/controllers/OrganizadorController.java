@@ -40,7 +40,6 @@ public class OrganizadorController {
             return ResponseUtils.badRequest("Senha é obrigatória");
         }
 
-        // Verificar email duplicado
         if (repositorio.existeOrganizadorComEmail(organizador.getEmail())) {
             return ResponseUtils.badRequest("Já existe um organizador cadastrado com este e-mail: " + organizador.getEmail());
         }
@@ -67,20 +66,16 @@ public class OrganizadorController {
 
         Organizador organizadorExistente = organizadorOpt.get();
 
-        // Não permitir alteração de e-mail
         if (!organizadorExistente.getEmail().equals(organizador.getEmail())) {
             return ResponseUtils.badRequest("Não é permitido alterar o e-mail do organizador");
         }
 
-        // Manter o ID
         organizador.setId(organizadorId);
 
-        // Manter a senha se não foi fornecida
         if (organizador.getSenha() == null || organizador.getSenha().isEmpty()) {
             organizador.setSenha(organizadorExistente.getSenha());
         }
 
-        // Manter o status ativo
         organizador.setAtivo(organizadorExistente.isAtivo());
 
         repositorio.salvarOrganizador(organizador);
@@ -93,10 +88,9 @@ public class OrganizadorController {
         Optional<Organizador> organizadorOpt = repositorio.buscarOrganizadorPorId(organizadorId);
 
         if (!organizadorOpt.isPresent()) {
-            // Retorna um Map com erro em vez de String
             Map<String, String> erro = new HashMap<>();
             erro.put("erro", "Organizador não encontrado com ID: " + organizadorId);
-            return ResponseUtils.ok(erro); // Agora retorna Object
+            return ResponseUtils.ok(erro);
         }
 
         Organizador organizador = organizadorOpt.get();
@@ -139,7 +133,6 @@ public class OrganizadorController {
             repositorio.salvarOrganizador(organizador);
             return ResponseUtils.ok("Organizador reativado com sucesso!");
         } else if ("desativar".equalsIgnoreCase(status)) {
-            // Verificar se tem eventos ativos
             if (repositorio.organizadorTemEventosAtivos(organizadorId)) {
                 return ResponseUtils.badRequest("Não é possível desativar o organizador pois ele possui eventos ativos ou em execução");
             }

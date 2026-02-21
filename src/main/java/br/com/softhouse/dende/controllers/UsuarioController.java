@@ -24,7 +24,6 @@ public class UsuarioController {
     @PostMapping
     public ResponseEntity<String> cadastroUsuario(@RequestBody Usuario usuario) {
 
-        // Validação dos campos obrigatoria 
         if (usuario.getNome() == null || usuario.getNome().trim().isEmpty()) {
             return ResponseUtils.badRequest("Nome é obrigatório");
         }
@@ -41,7 +40,6 @@ public class UsuarioController {
             return ResponseUtils.badRequest("Senha é obrigatória");
         }
 
-        // Verificar email duplicado
         if (repositorio.existeUsuarioComEmail(usuario.getEmail())) {
             return ResponseUtils.badRequest("Já existe um usuário cadastrado com este e-mail: " + usuario.getEmail());
         }
@@ -68,20 +66,16 @@ public class UsuarioController {
 
         Usuario usuarioExistente = usuarioOpt.get();
 
-        // Não permitir alteração de e-mail
         if (!usuarioExistente.getEmail().equals(usuario.getEmail())) {
             return ResponseUtils.badRequest("Não é permitido alterar o e-mail do usuário");
         }
 
-        // Manter o ID
         usuario.setId(usuarioId);
 
-        // Manter a senha se não foi fornecida
         if (usuario.getSenha() == null || usuario.getSenha().isEmpty()) {
             usuario.setSenha(usuarioExistente.getSenha());
         }
 
-        // Manter o status ativo
         usuario.setAtivo(usuarioExistente.isAtivo());
 
         repositorio.salvarUsuario(usuario);
@@ -94,15 +88,13 @@ public class UsuarioController {
         Optional<Usuario> usuarioOpt = repositorio.buscarUsuarioPorId(usuarioId);
 
         if (!usuarioOpt.isPresent()) {
-            // Retorna um Map com erro em vez de String
             Map<String, String> erro = new HashMap<>();
             erro.put("erro", "Usuário não encontrado com ID: " + usuarioId);
-            return ResponseUtils.ok(erro); // Agora retorna Object
+            return ResponseUtils.ok(erro);
         }
 
         Usuario usuario = usuarioOpt.get();
 
-        // Criar um mapa com os dados para não expor a senha
         Map<String, Object> perfil = new HashMap<>();
         perfil.put("id", usuario.getId());
         perfil.put("nome", usuario.getNome());

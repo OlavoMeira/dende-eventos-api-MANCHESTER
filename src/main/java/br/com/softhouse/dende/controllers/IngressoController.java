@@ -27,7 +27,6 @@ public class IngressoController {
             @PathVariable(parameter = "eventoId") long eventoId,
             @RequestBody Map<String, Object> requestBody) {
 
-        // Extrair dados do request body
         String emailUsuario = (String) requestBody.get("usuario");
         Double totalPago = requestBody.get("totalPago") != null ?
                 Double.valueOf(requestBody.get("totalPago").toString()) : null;
@@ -39,7 +38,6 @@ public class IngressoController {
             return ResponseUtils.badRequest("Valor pago é obrigatório e deve ser maior que zero");
         }
 
-        // Buscar evento
         Optional<Evento> eventoOpt = repositorio.buscarEventoPorId(eventoId);
 
         if (!eventoOpt.isPresent()) {
@@ -48,22 +46,18 @@ public class IngressoController {
 
         Evento evento = eventoOpt.get();
 
-        // Verificar se o evento pertence ao organizador
         if (!evento.getOrganizador().getId().equals(organizadorId)) {
             return ResponseUtils.badRequest("Este evento não pertence ao organizador informado");
         }
 
-        // Verificar se o evento está ativo
         if (!evento.isAtivo()) {
             return ResponseUtils.badRequest("Este evento não está ativo para venda de ingressos");
         }
 
-        // Verificar se ainda há vagas
         if (evento.isLotado()) {
             return ResponseUtils.badRequest("Este evento está lotado");
         }
 
-        // Buscar usuário pelo email
         Optional<Usuario> usuarioOpt = repositorio.buscarUsuarioPorEmail(emailUsuario);
 
         if (!usuarioOpt.isPresent()) {
@@ -76,7 +70,6 @@ public class IngressoController {
             return ResponseUtils.badRequest("Usuário está desativado. Não é possível comprar ingressos.");
         }
 
-        // Se o evento tiver evento principal, validar valor total
         if (evento.getEventoPrincipal() != null) {
             Evento eventoPrincipal = evento.getEventoPrincipal();
             Double valorTotal = eventoPrincipal.getPrecoUnitarioIngresso() + evento.getPrecoUnitarioIngresso();
@@ -85,12 +78,10 @@ public class IngressoController {
                 return ResponseUtils.badRequest("Valor pago incorreto. O valor total deve ser: " + valorTotal);
             }
 
-            // Criar ingresso para o evento principal
             Ingresso ingressoPrincipal = new Ingresso(usuario, eventoPrincipal, eventoPrincipal.getPrecoUnitarioIngresso());
             repositorio.salvarIngresso(ingressoPrincipal);
         }
 
-        // Criar ingresso para o evento atual
         Ingresso ingresso = new Ingresso(usuario, evento, evento.getPrecoUnitarioIngresso());
         repositorio.salvarIngresso(ingresso);
 
@@ -120,19 +111,16 @@ public class IngressoController {
 
         Ingresso ingresso = ingressoOpt.get();
 
-        // Verificar se o ingresso pertence ao usuário
         if (!ingresso.getUsuario().getId().equals(usuarioId)) {
             return ResponseUtils.badRequest("Este ingresso não pertence ao usuário informado");
         }
 
-        // Verificar se o ingresso já não está cancelado
         if (ingresso.getStatus() == br.com.softhouse.dende.enums.StatusIngresso.CANCELADO) {
             return ResponseUtils.badRequest("Este ingresso já está cancelado");
         }
 
         Evento evento = ingresso.getEvento();
 
-        // Cancelar ingresso
         ingresso.cancelar(evento.getTaxaCancelamento());
         repositorio.salvarIngresso(ingresso);
 
@@ -146,10 +134,9 @@ public class IngressoController {
         Optional<Usuario> usuarioOpt = repositorio.buscarUsuarioPorId(usuarioId);
 
         if (!usuarioOpt.isPresent()) {
-            // Retorna um Map com erro em vez de String
             Map<String, String> erro = new HashMap<>();
             erro.put("erro", "Usuário não encontrado com ID: " + usuarioId);
-            return ResponseUtils.ok(erro); // Agora retorna Object
+            return ResponseUtils.ok(erro);
         }
 
         List<Map<String, Object>> ingressos = repositorio.listarIngressosDoUsuario(usuarioId)

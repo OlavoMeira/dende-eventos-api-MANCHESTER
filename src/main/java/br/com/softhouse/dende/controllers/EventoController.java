@@ -28,7 +28,7 @@ public class EventoController {
 
     @PostMapping(path = "/{organizadorId}/eventos")
     public ResponseEntity<String> cadastrarEvento(
-            @PathVariable(parameter = "organizadorId") long organizadorId,  // Agora vem do método
+            @PathVariable(parameter = "organizadorId") long organizadorId,
             @RequestBody Evento evento) {
 
         Optional<Organizador> organizadorOpt = repositorio.buscarOrganizadorPorId(organizadorId);
@@ -43,7 +43,6 @@ public class EventoController {
             return ResponseUtils.badRequest("Organizador está desativado. Não é possível cadastrar eventos.");
         }
 
-        // Validar campos obrigatórios
         if (evento.getNome() == null || evento.getNome().trim().isEmpty()) {
             return ResponseUtils.badRequest("Nome do evento é obrigatório");
         }
@@ -66,8 +65,6 @@ public class EventoController {
             return ResponseUtils.badRequest("Preço do ingresso é obrigatório");
         }
 
-
-        // Validar datas do evento
         LocalDateTime agora = LocalDateTime.now();
 
         if (evento.getDataInicio().isBefore(agora)) {
@@ -83,11 +80,9 @@ public class EventoController {
             return ResponseUtils.badRequest("O evento deve ter no mínimo 30 minutos de duração");
         }
 
-        // Configurar evento
         evento.setOrganizador(organizador);
         evento.setAtivo(true);
 
-        // Verificar se tem evento principal
         if (evento.getEventoPrincipal() != null && evento.getEventoPrincipal().getId() != null) {
             Optional<Evento> eventoPrincipalOpt = repositorio.buscarEventoPorId(evento.getEventoPrincipal().getId());
             if (eventoPrincipalOpt.isPresent()) {
@@ -102,7 +97,7 @@ public class EventoController {
 
     @PutMapping(path = "/{organizadorId}/eventos/{eventoId}")
     public ResponseEntity<String> alterarEvento(
-            @PathVariable(parameter = "organizadorId") long organizadorId,  // Vem do método
+            @PathVariable(parameter = "organizadorId") long organizadorId,
             @PathVariable(parameter = "eventoId") long eventoId,
             @RequestBody Evento evento) {
 
@@ -120,27 +115,21 @@ public class EventoController {
 
         Evento eventoExistente = eventoOpt.get();
 
-        // Verificar se o evento pertence ao organizador
         if (!eventoExistente.getOrganizador().getId().equals(organizadorId)) {
             return ResponseUtils.badRequest("Este evento não pertence ao organizador informado");
         }
 
-        // Verificar se o evento está ativo para alteração
         if (!eventoExistente.isAtivo()) {
             return ResponseUtils.badRequest("Não é possível alterar um evento inativo");
         }
 
-        // Manter o ID e o organizador
         evento.setId(eventoId);
         evento.setOrganizador(organizadorOpt.get());
 
-        // Manter o status atual (não alterar ativação aqui)
         evento.setAtivo(eventoExistente.isAtivo());
 
-        // Manter ingressos existentes
         evento.setIngressos(eventoExistente.getIngressos());
 
-        // Validar datas se foram alteradas
         if (evento.getDataInicio() != null && evento.getDataFim() != null) {
             LocalDateTime agora = LocalDateTime.now();
 
@@ -183,7 +172,6 @@ public class EventoController {
 
         Evento evento = eventoOpt.get();
 
-        // Verificar se o evento pertence ao organizador
         if (!evento.getOrganizador().getId().equals(organizadorId)) {
             return ResponseUtils.badRequest("Este evento não pertence ao organizador informado");
         }
@@ -196,7 +184,6 @@ public class EventoController {
             evento.setAtivo(false);
             repositorio.salvarEvento(evento);
 
-            // Se tiver ingressos vendidos, cancelar e reembolsar
             if (!evento.getIngressos().isEmpty()) {
                 repositorio.cancelarIngressosDoEvento(eventoId);
                 return ResponseUtils.ok("Evento desativado com sucesso! " +
@@ -216,10 +203,9 @@ public class EventoController {
         Optional<Organizador> organizadorOpt = repositorio.buscarOrganizadorPorId(organizadorId);
 
         if (!organizadorOpt.isPresent()) {
-            // Retorna um Map com erro em vez de String
             Map<String, String> erro = new HashMap<>();
             erro.put("erro", "Organizador não encontrado com ID: " + organizadorId);
-            return ResponseUtils.ok(erro); // Agora retorna Object
+            return ResponseUtils.ok(erro);
         }
 
         List<Map<String, Object>> eventos = repositorio.listarEventosDoOrganizador(organizadorId)
