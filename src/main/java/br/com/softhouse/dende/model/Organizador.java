@@ -1,35 +1,61 @@
 package br.com.softhouse.dende.model;
 
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.Objects;
 
 public class Organizador {
-
+    private Long id;
     private String nome;
     private LocalDate dataNascimento;
     private String sexo;
     private String email;
-    private String cnpj;
-    private String razaoSocial;
-    private String nomeFantasia;
+    private String senha;
+    private boolean ativo;
 
-    public Organizador(String nome, LocalDate dataNascimento, String sexo, String email, String cnpj, String razaoSocial, String nomeFantasia) {
+    private Empresa empresa;
+
+    public Organizador() {
+        this.ativo = true;
+    }
+
+    public Organizador(String nome, LocalDate dataNascimento, String sexo, String email,
+                       String senha, String cnpj, String razaoSocial, String nomeFantasia) {
         this.nome = nome;
         this.dataNascimento = dataNascimento;
         this.sexo = sexo;
         this.email = email;
-        this.cnpj = cnpj;
-        this.razaoSocial = razaoSocial;
-        this.nomeFantasia = nomeFantasia;
+        this.senha = senha;
+        this.ativo = true;
+
+        if (cnpj != null && !cnpj.trim().isEmpty()) {
+            this.empresa = new Empresa(cnpj, razaoSocial, nomeFantasia, null);
+        }
     }
 
-    public Organizador() {
+    public String getIdadeCompleta() {
+        if (dataNascimento == null) return "";
+        LocalDate hoje = LocalDate.now();
+        Period periodo = Period.between(dataNascimento, hoje);
+        return String.format("%d anos, %d meses e %d dias",
+                periodo.getYears(), periodo.getMonths(), periodo.getDays());
+    }
+
+    public boolean isEmpresa() {
+        return this.empresa != null && this.empresa.getCnpj() != null;
+    }
+
+    
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getNome() {
         return nome;
     }
-
     public void setNome(String nome) {
         this.nome = nome;
     }
@@ -37,7 +63,6 @@ public class Organizador {
     public LocalDate getDataNascimento() {
         return dataNascimento;
     }
-
     public void setDataNascimento(LocalDate dataNascimento) {
         this.dataNascimento = dataNascimento;
     }
@@ -45,7 +70,6 @@ public class Organizador {
     public String getSexo() {
         return sexo;
     }
-
     public void setSexo(String sexo) {
         this.sexo = sexo;
     }
@@ -53,58 +77,63 @@ public class Organizador {
     public String getEmail() {
         return email;
     }
-
     public void setEmail(String email) {
         this.email = email;
     }
 
-    public String getCnpj() {
-        return cnpj;
+    public String getSenha() {
+        return senha;
+    }
+    public void setSenha(String senha) {
+        this.senha = senha;
     }
 
-    public void setCnpj(String cnpj) {
-        this.cnpj = cnpj;
+    public boolean isAtivo() {
+        return ativo;
+    }
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
+
+    public Empresa getEmpresa() {
+        return empresa;
+    }
+    public void setEmpresa(Empresa empresa) {
+        this.empresa = empresa;
+    }
+
+    public String getCnpj() {
+        return (empresa != null) ? empresa.getCnpj() : null;
     }
 
     public String getRazaoSocial() {
-        return razaoSocial;
-    }
-
-    public void setRazaoSocial(String razaoSocial) {
-        this.razaoSocial = razaoSocial;
+        return (empresa != null) ? empresa.getRazaoSocial() : null;
     }
 
     public String getNomeFantasia() {
-        return nomeFantasia;
-    }
-
-    public void setNomeFantasia(String nomeFantasia) {
-        this.nomeFantasia = nomeFantasia;
+        return (empresa != null) ? empresa.getNomeFantasia() : null;
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        Organizador that = (Organizador) object;
-        return Objects.equals(nome, that.nome) && Objects.equals(dataNascimento, that.dataNascimento) && Objects.equals(sexo, that.sexo) && Objects.equals(email, that.email) && Objects.equals(cnpj, that.cnpj) && Objects.equals(razaoSocial, that.razaoSocial) && Objects.equals(nomeFantasia, that.nomeFantasia);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Organizador that = (Organizador) o;
+        return Objects.equals(email, that.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nome, dataNascimento, sexo, email, cnpj, razaoSocial, nomeFantasia);
+        return Objects.hash(email);
     }
 
     @Override
     public String toString() {
         return "Organizador{" +
-                "nome='" + nome + '\'' +
-                ", dataNascimento=" + dataNascimento +
-                ", sexo='" + sexo + '\'' +
+                "id=" + id +
+                ", nome='" + nome + '\'' +
                 ", email='" + email + '\'' +
-                ", cnpj='" + cnpj + '\'' +
-                ", razaoSocial='" + razaoSocial + '\'' +
-                ", nomeFantasia='" + nomeFantasia + '\'' +
+                ", empresa=" + (isEmpresa() ? empresa.getCnpj() : "N/A") +
                 '}';
     }
 }
