@@ -23,41 +23,41 @@ public class OrganizadorController {
     }
 
     @PostMapping
-    public ResponseEntity<String> cadastroOrganizador(@RequestBody OrganizadorRequestDTO dto) {
-
-        if (dto.getNome() == null || dto.getNome().trim().isEmpty()) {
+    public ResponseEntity<String> cadastroOrganizador(@RequestBody OrganizadorRequestDTO organizadorRequest) {
+        if (organizadorRequest.getNome() == null || organizadorRequest.getNome().trim().isEmpty()) {
             return ResponseUtils.badRequest("Nome é obrigatório");
         }
-        if (dto.getDataNascimento() == null) {
+        if (organizadorRequest.getDataNascimento() == null) {
             return ResponseUtils.badRequest("Data de nascimento é obrigatória");
         }
-        if (dto.getSexo() == null || dto.getSexo().trim().isEmpty()) {
+        if (organizadorRequest.getSexo() == null || organizadorRequest.getSexo().trim().isEmpty()) {
             return ResponseUtils.badRequest("Sexo é obrigatório");
         }
-        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+        if (organizadorRequest.getEmail() == null || organizadorRequest.getEmail().trim().isEmpty()) {
             return ResponseUtils.badRequest("Email é obrigatório");
         }
-        if (dto.getSenha() == null || dto.getSenha().trim().isEmpty()) {
+        if (organizadorRequest.getSenha() == null || organizadorRequest.getSenha().trim().isEmpty()) {
             return ResponseUtils.badRequest("Senha é obrigatória");
         }
 
-        if (repositorio.existeOrganizadorComEmail(dto.getEmail())) {
-            return ResponseUtils.badRequest("Já existe um organizador cadastrado com este e-mail: " + dto.getEmail());
-        }
-        if (repositorio.existeUsuarioComEmail(dto.getEmail())) {
-            return ResponseUtils.badRequest("Este e-mail já está cadastrado como usuário comum: " + dto.getEmail());
+        if (repositorio.existeOrganizadorComEmail(organizadorRequest.getEmail())) {
+            return ResponseUtils.badRequest("Já existe um organizador cadastrado com este e-mail: " + organizadorRequest.getEmail());
         }
 
-        Organizador organizador = OrganizadorMapper.toModel(dto);
+        if (repositorio.existeUsuarioComEmail(organizadorRequest.getEmail())) {
+            return ResponseUtils.badRequest("Este e-mail já está cadastrado como usuário comum: " + organizadorRequest.getEmail());
+        }
+
+        Organizador organizador = OrganizadorMapper.toModel(organizadorRequest);
         repositorio.salvarOrganizador(organizador);
 
-        return ResponseUtils.ok("Organizador " + organizador.getEmail() + " registrado com sucesso!");
+        return ResponseUtils.ok("Organizador " + organizador.getEmail() + " registrado com sucesso! ID: " + organizador.getId());
     }
 
     @PutMapping(path = "/{organizadorId}")
     public ResponseEntity<String> alterarOrganizador(
             @PathVariable(parameter = "organizadorId") long organizadorId,
-            @RequestBody OrganizadorRequestDTO dto) {
+            @RequestBody OrganizadorRequestDTO organizadorRequest) {
 
         Optional<Organizador> organizadorOpt = repositorio.buscarOrganizadorPorId(organizadorId);
 
@@ -67,11 +67,11 @@ public class OrganizadorController {
 
         Organizador organizadorExistente = organizadorOpt.get();
 
-        if (!organizadorExistente.getEmail().equals(dto.getEmail())) {
+        if (!organizadorExistente.getEmail().equals(organizadorRequest.getEmail())) {
             return ResponseUtils.badRequest("Não é permitido alterar o e-mail do organizador");
         }
 
-        OrganizadorMapper.updateModel(dto, organizadorExistente);
+        OrganizadorMapper.updateModel(organizadorRequest, organizadorExistente);
         repositorio.salvarOrganizador(organizadorExistente);
 
         return ResponseUtils.ok("Organizador " + organizadorExistente.getEmail() + " alterado com sucesso!");
@@ -79,15 +79,14 @@ public class OrganizadorController {
 
     @GetMapping(path = "/{organizadorId}")
     public ResponseEntity<?> visualizarPerfil(@PathVariable(parameter = "organizadorId") long organizadorId) {
-
         Optional<Organizador> organizadorOpt = repositorio.buscarOrganizadorPorId(organizadorId);
 
         if (!organizadorOpt.isPresent()) {
-            return ResponseUtils.badRequest("Organizador não encontrado com ID: " + organizadorId);
+            return ResponseUtils.notFound("Organizador não encontrado com ID: " + organizadorId);
         }
 
-        OrganizadorResponseDTO responseDTO = OrganizadorMapper.toResponse(organizadorOpt.get());
-        return ResponseUtils.ok(responseDTO);
+        OrganizadorResponseDTO response = OrganizadorMapper.toResponse(organizadorOpt.get());
+        return ResponseUtils.ok(response);
     }
 
     @PatchMapping(path = "/{organizadorId}/{status}")
@@ -109,9 +108,9 @@ public class OrganizadorController {
             return ResponseUtils.ok("Organizador reativado com sucesso!");
         } else if ("desativar".equalsIgnoreCase(status)) {
             if (repositorio.organizadorTemEventosAtivos(organizadorId)) {
-                return ResponseUtils.badRequest(
-                        "Não é possível desativar o organizador pois ele possui eventos ativos ou em execução");
+                return ResponseUtils.badRequest("Não é possível desativar o organizador pois ele possui eventos ativos ou em execução");
             }
+
             organizador.setAtivo(false);
             repositorio.salvarOrganizador(organizador);
             return ResponseUtils.ok("Organizador desativado com sucesso!");

@@ -22,8 +22,7 @@ public class FeedEventosController {
     }
 
     @GetMapping
-    public ResponseEntity<?> feedEventos() {
-
+    public ResponseEntity<Object> feedEventos() {
         List<EventoResponseDTO> eventos = repositorio.listarEventosAtivos()
                 .stream()
                 .map(EventoMapper::toResponse)

@@ -23,41 +23,42 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<String> cadastroUsuario(@RequestBody UsuarioRequestDTO dto) {
+    public ResponseEntity<String> cadastroUsuario(@RequestBody UsuarioRequestDTO usuarioRequest) {
 
-        if (dto.getNome() == null || dto.getNome().trim().isEmpty()) {
+        if (usuarioRequest.getNome() == null || usuarioRequest.getNome().trim().isEmpty()) {
             return ResponseUtils.badRequest("Nome é obrigatório");
         }
-        if (dto.getDataNascimento() == null) {
+        if (usuarioRequest.getDataNascimento() == null) {
             return ResponseUtils.badRequest("Data de nascimento é obrigatória");
         }
-        if (dto.getSexo() == null || dto.getSexo().trim().isEmpty()) {
+        if (usuarioRequest.getSexo() == null || usuarioRequest.getSexo().trim().isEmpty()) {
             return ResponseUtils.badRequest("Sexo é obrigatório");
         }
-        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+        if (usuarioRequest.getEmail() == null || usuarioRequest.getEmail().trim().isEmpty()) {
             return ResponseUtils.badRequest("Email é obrigatório");
         }
-        if (dto.getSenha() == null || dto.getSenha().trim().isEmpty()) {
+        if (usuarioRequest.getSenha() == null || usuarioRequest.getSenha().trim().isEmpty()) {
             return ResponseUtils.badRequest("Senha é obrigatória");
         }
 
-        if (repositorio.existeUsuarioComEmail(dto.getEmail())) {
-            return ResponseUtils.badRequest("Já existe um usuário cadastrado com este e-mail: " + dto.getEmail());
-        }
-        if (repositorio.existeOrganizadorComEmail(dto.getEmail())) {
-            return ResponseUtils.badRequest("Este e-mail já está cadastrado como organizador: " + dto.getEmail());
+        if (repositorio.existeUsuarioComEmail(usuarioRequest.getEmail())) {
+            return ResponseUtils.badRequest("Já existe um usuário cadastrado com este e-mail: " + usuarioRequest.getEmail());
         }
 
-        Usuario usuario = UsuarioMapper.toModel(dto);
+        if (repositorio.existeOrganizadorComEmail(usuarioRequest.getEmail())) {
+            return ResponseUtils.badRequest("Este e-mail já está cadastrado como organizador: " + usuarioRequest.getEmail());
+        }
+
+        Usuario usuario = UsuarioMapper.toModel(usuarioRequest);
         repositorio.salvarUsuario(usuario);
 
-        return ResponseUtils.ok("Usuario " + usuario.getEmail() + " registrado com sucesso!");
+        return ResponseUtils.ok("Usuario " + usuario.getEmail() + " registrado com sucesso! ID: " + usuario.getId());
     }
 
     @PutMapping(path = "/{usuarioId}")
     public ResponseEntity<String> alterarUsuario(
             @PathVariable(parameter = "usuarioId") long usuarioId,
-            @RequestBody UsuarioRequestDTO dto) {
+            @RequestBody UsuarioRequestDTO usuarioRequest) {
 
         Optional<Usuario> usuarioOpt = repositorio.buscarUsuarioPorId(usuarioId);
 
@@ -67,27 +68,26 @@ public class UsuarioController {
 
         Usuario usuarioExistente = usuarioOpt.get();
 
-        if (!usuarioExistente.getEmail().equals(dto.getEmail())) {
+        if (!usuarioExistente.getEmail().equals(usuarioRequest.getEmail())) {
             return ResponseUtils.badRequest("Não é permitido alterar o e-mail do usuário");
         }
 
-        UsuarioMapper.updateModel(dto, usuarioExistente);
+        UsuarioMapper.updateModel(usuarioRequest, usuarioExistente);
         repositorio.salvarUsuario(usuarioExistente);
 
         return ResponseUtils.ok("Usuario " + usuarioExistente.getEmail() + " alterado com sucesso!");
     }
 
     @GetMapping(path = "/{usuarioId}")
-    public ResponseEntity<?> visualizarPerfil(@PathVariable(parameter = "usuarioId") long usuarioId) {
-
+    public ResponseEntity<Object> visualizarPerfil(@PathVariable(parameter = "usuarioId") long usuarioId) {
         Optional<Usuario> usuarioOpt = repositorio.buscarUsuarioPorId(usuarioId);
 
         if (!usuarioOpt.isPresent()) {
-            return ResponseUtils.badRequest("Usuário não encontrado com ID: " + usuarioId);
+            return ResponseUtils.notFound(ResponseUtils.createErrorMap("Usuário não encontrado com ID: " + usuarioId));
         }
 
-        UsuarioResponseDTO responseDTO = UsuarioMapper.toResponse(usuarioOpt.get());
-        return ResponseUtils.ok(responseDTO);
+        UsuarioResponseDTO response = UsuarioMapper.toResponse(usuarioOpt.get());
+        return ResponseUtils.ok(response);
     }
 
     @PatchMapping(path = "/{usuarioId}/{status}")
