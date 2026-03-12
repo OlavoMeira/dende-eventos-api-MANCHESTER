@@ -113,7 +113,6 @@ public class EventoController {
 
         EventoMapper.updateModel(eventoRequest, eventoExistente);
 
-        // Atualiza evento principal se necessário
         if (eventoRequest.getEventoPrincipalId() != null) {
             Optional<Evento> eventoPrincipalOpt = repositorio.buscarEventoPorId(eventoRequest.getEventoPrincipalId());
             eventoPrincipalOpt.ifPresent(eventoExistente::setEventoPrincipal);
