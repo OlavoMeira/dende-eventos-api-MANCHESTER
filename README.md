@@ -51,10 +51,10 @@ Este projeto depende do framework educacional:
 **Integrantes do Time:**
 
 1. _Olavo Barros Meira Filho___________________________________
-2. _Eduardo Silva Brandão Filho__________________________________
-3. _Daniel Silva Caroba___________________________________
-4. _Gustavo Barbosa___________________________________
-5. _Ian Dias Duque___________________________________
+2. _Davi Goes Bonifácio Berbert Marques__________________________________
+3. _Ian Dias Duque___________________________________
+4. ____________________________________
+5. ____________________________________
 
 ---
 
