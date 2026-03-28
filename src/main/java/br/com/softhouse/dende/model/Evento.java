@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class Evento {
+
     private Long id;
     private String nome;
     private String paginaWeb;
@@ -36,9 +37,32 @@ public class Evento {
         this.taxaCancelamento = 0.0;
     }
 
+    private Evento(EventoBuilder builder) {
+        this.id = builder.id;
+        this.nome = builder.nome;
+        this.paginaWeb = builder.paginaWeb;
+        this.descricao = builder.descricao;
+        this.dataInicio = builder.dataInicio;
+        this.dataFim = builder.dataFim;
+        this.tipoEvento = builder.tipoEvento;
+        this.modalidade = builder.modalidade;
+        this.local = builder.local;
+        this.capacidadeMaxima = builder.capacidadeMaxima != null ? builder.capacidadeMaxima : 0;
+        this.precoUnitarioIngresso = builder.precoUnitarioIngresso != null ? builder.precoUnitarioIngresso : 0.0;
+        this.taxaCancelamento = builder.taxaCancelamento != null ? builder.taxaCancelamento : 0.0;
+        this.ativo = builder.ativo;
+        this.organizador = builder.organizador;
+        this.eventoPrincipal = builder.eventoPrincipal;
+        this.ingressos = new ArrayList<>();
+        this.subEventos = new ArrayList<>();
+    }
+
+    public static EventoBuilder builder() {
+        return new EventoBuilder();
+    }
+
     public boolean isLotado() {
         if (capacidadeMaxima == null || capacidadeMaxima <= 0) return true;
-
         long ingressosAtivos = ingressos.stream()
                 .filter(i -> i.getStatus() == br.com.softhouse.dende.enums.StatusIngresso.ATIVO)
                 .count();
@@ -58,25 +82,15 @@ public class Evento {
 
     public boolean isValidoParaCadastro() {
         if (dataInicio == null || dataFim == null) return false;
-        
         LocalDateTime agora = LocalDateTime.now();
-
-        if (dataInicio.isBefore(agora)) {
-            return false;
-        }
-
-        if (dataFim.isBefore(dataInicio)) {
-            return false;
-        }
-
+        if (dataInicio.isBefore(agora)) return false;
+        if (dataFim.isBefore(dataInicio)) return false;
         Duration duracao = Duration.between(dataInicio, dataFim);
         return duracao.toMinutes() >= 30;
     }
 
     public void adicionarIngresso(Ingresso ingresso) {
-        if (ingressos == null) {
-            ingressos = new ArrayList<>();
-        }
+        if (ingressos == null) ingressos = new ArrayList<>();
         ingressos.add(ingresso);
     }
 
@@ -92,124 +106,62 @@ public class Evento {
         return capacidadeMaxima - getIngressosVendidos();
     }
 
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public String getNome() {
-        return nome;
-    }
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
 
-    public String getPaginaWeb() {
-        return paginaWeb;
-    }
-    public void setPaginaWeb(String paginaWeb) {
-        this.paginaWeb = paginaWeb;
-    }
+    public String getPaginaWeb() { return paginaWeb; }
+    public void setPaginaWeb(String paginaWeb) { this.paginaWeb = paginaWeb; }
 
-    public String getDescricao() {
-        return descricao;
-    }
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
-    }
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
 
-    public LocalDateTime getDataInicio() {
-        return dataInicio;
-    }
-    public void setDataInicio(LocalDateTime dataInicio) {
-        this.dataInicio = dataInicio;
-    }
+    public LocalDateTime getDataInicio() { return dataInicio; }
+    public void setDataInicio(LocalDateTime dataInicio) { this.dataInicio = dataInicio; }
 
-    public LocalDateTime getDataFim() {
-        return dataFim;
-    }
-    public void setDataFim(LocalDateTime dataFim) {
-        this.dataFim = dataFim;
-    }
+    public LocalDateTime getDataFim() { return dataFim; }
+    public void setDataFim(LocalDateTime dataFim) { this.dataFim = dataFim; }
 
-    public TipoEvento getTipoEvento() {
-        return tipoEvento;
-    }
-    public void setTipoEvento(TipoEvento tipoEvento) {
-        this.tipoEvento = tipoEvento;
-    }
+    public TipoEvento getTipoEvento() { return tipoEvento; }
+    public void setTipoEvento(TipoEvento tipoEvento) { this.tipoEvento = tipoEvento; }
 
-    public ModalidadeEvento getModalidade() {
-        return modalidade;
-    }
-    public void setModalidade(ModalidadeEvento modalidade) {
-        this.modalidade = modalidade;
-    }
+    public ModalidadeEvento getModalidade() { return modalidade; }
+    public void setModalidade(ModalidadeEvento modalidade) { this.modalidade = modalidade; }
 
-    public String getLocal() {
-        return local;
-    }
-    public void setLocal(String local) {
-        this.local = local;
-    }
+    public String getLocal() { return local; }
+    public void setLocal(String local) { this.local = local; }
 
-    public Integer getCapacidadeMaxima() {
-        return capacidadeMaxima;
-    }
+    public Integer getCapacidadeMaxima() { return capacidadeMaxima; }
     public void setCapacidadeMaxima(Integer capacidadeMaxima) {
         this.capacidadeMaxima = (capacidadeMaxima != null) ? capacidadeMaxima : 0;
     }
 
-    public Double getPrecoUnitarioIngresso() {
-        return precoUnitarioIngresso;
-    }
+    public Double getPrecoUnitarioIngresso() { return precoUnitarioIngresso; }
     public void setPrecoUnitarioIngresso(Double precoUnitarioIngresso) {
         this.precoUnitarioIngresso = precoUnitarioIngresso;
     }
 
-    public Double getTaxaCancelamento() {
-        return taxaCancelamento;
-    }
+    public Double getTaxaCancelamento() { return taxaCancelamento; }
     public void setTaxaCancelamento(Double taxaCancelamento) {
         this.taxaCancelamento = (taxaCancelamento != null) ? taxaCancelamento : 0.0;
     }
 
-    public boolean isAtivo() {
-        return ativo;
-    }
-    public void setAtivo(boolean ativo) {
-        this.ativo = ativo;
-    }
+    public boolean isAtivo() { return ativo; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
-    public Organizador getOrganizador() {
-        return organizador;
-    }
-    public void setOrganizador(Organizador organizador) {
-        this.organizador = organizador;
-    }
+    public Organizador getOrganizador() { return organizador; }
+    public void setOrganizador(Organizador organizador) { this.organizador = organizador; }
 
-    public Evento getEventoPrincipal() {
-        return eventoPrincipal;
-    }
-    public void setEventoPrincipal(Evento eventoPrincipal) {
-        this.eventoPrincipal = eventoPrincipal;
-    }
+    public Evento getEventoPrincipal() { return eventoPrincipal; }
+    public void setEventoPrincipal(Evento eventoPrincipal) { this.eventoPrincipal = eventoPrincipal; }
 
-    public List<Evento> getSubEventos() {
-        return subEventos;
-    }
-    public void setSubEventos(List<Evento> subEventos) {
-        this.subEventos = subEventos;
-    }
+    public List<Evento> getSubEventos() { return subEventos; }
+    public void setSubEventos(List<Evento> subEventos) { this.subEventos = subEventos; }
 
-    public List<Ingresso> getIngressos() {
-        return ingressos;
-    }
-    public void setIngressos(List<Ingresso> ingressos) {
-        this.ingressos = ingressos;
-    }
+    public List<Ingresso> getIngressos() { return ingressos; }
+    public void setIngressos(List<Ingresso> ingressos) { this.ingressos = ingressos; }
 
     @Override
     public boolean equals(Object o) {
@@ -220,17 +172,110 @@ public class Evento {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int hashCode() { return Objects.hash(id); }
 
     @Override
     public String toString() {
-        return "Evento{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", dataInicio=" + dataInicio +
-                ", ativo=" + ativo +
-                '}';
+        return "Evento{id=" + id + ", nome='" + nome + "', dataInicio=" + dataInicio + ", ativo=" + ativo + '}';
+    }
+
+    public static class EventoBuilder {
+
+        private Long id;
+        private String nome;
+        private String paginaWeb;
+        private String descricao;
+        private LocalDateTime dataInicio;
+        private LocalDateTime dataFim;
+        private TipoEvento tipoEvento;
+        private ModalidadeEvento modalidade;
+        private String local;
+        private Integer capacidadeMaxima;
+        private Double precoUnitarioIngresso;
+        private Double taxaCancelamento;
+        private boolean ativo = true;
+        private Organizador organizador;
+        private Evento eventoPrincipal;
+
+        private EventoBuilder() {}
+
+        public EventoBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public EventoBuilder nome(String nome) {
+            this.nome = nome;
+            return this;
+        }
+
+        public EventoBuilder paginaWeb(String paginaWeb) {
+            this.paginaWeb = paginaWeb;
+            return this;
+        }
+
+        public EventoBuilder descricao(String descricao) {
+            this.descricao = descricao;
+            return this;
+        }
+
+        public EventoBuilder dataInicio(LocalDateTime dataInicio) {
+            this.dataInicio = dataInicio;
+            return this;
+        }
+
+        public EventoBuilder dataFim(LocalDateTime dataFim) {
+            this.dataFim = dataFim;
+            return this;
+        }
+
+        public EventoBuilder tipoEvento(TipoEvento tipoEvento) {
+            this.tipoEvento = tipoEvento;
+            return this;
+        }
+
+        public EventoBuilder modalidade(ModalidadeEvento modalidade) {
+            this.modalidade = modalidade;
+            return this;
+        }
+
+        public EventoBuilder local(String local) {
+            this.local = local;
+            return this;
+        }
+
+        public EventoBuilder capacidadeMaxima(Integer capacidadeMaxima) {
+            this.capacidadeMaxima = capacidadeMaxima;
+            return this;
+        }
+
+        public EventoBuilder precoUnitarioIngresso(Double precoUnitarioIngresso) {
+            this.precoUnitarioIngresso = precoUnitarioIngresso;
+            return this;
+        }
+
+        public EventoBuilder taxaCancelamento(Double taxaCancelamento) {
+            this.taxaCancelamento = taxaCancelamento;
+            return this;
+        }
+
+        public EventoBuilder ativo(boolean ativo) {
+            this.ativo = ativo;
+            return this;
+        }
+
+        public EventoBuilder organizador(Organizador organizador) {
+            this.organizador = organizador;
+            return this;
+        }
+
+        public EventoBuilder eventoPrincipal(Evento eventoPrincipal) {
+            this.eventoPrincipal = eventoPrincipal;
+            return this;
+        }
+
+        public Evento build() {
+            return new Evento(this);
+        }
     }
 }
