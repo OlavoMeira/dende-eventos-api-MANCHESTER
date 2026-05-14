@@ -1,82 +1,85 @@
 package br.com.softhouse.dende.services;
 
+import br.com.dende.softhouse.annotations.Component;
 import br.com.softhouse.dende.dto.request.UsuarioRequestDTO;
 import br.com.softhouse.dende.dto.response.UsuarioResponseDTO;
+import br.com.softhouse.dende.exceptions.*;
 import br.com.softhouse.dende.mapper.UsuarioMapper;
 import br.com.softhouse.dende.model.Usuario;
-import br.com.softhouse.dende.repositories.Repositorio;
+import br.com.softhouse.dende.repositories.OrganizadorRepository;
+import br.com.softhouse.dende.repositories.UsuarioRepository;
 
+@Component
 public class UsuarioService {
 
-    private final Repositorio repositorio;
+    private final UsuarioRepository usuarioRepository;
+    private final OrganizadorRepository organizadorRepository;
 
-    public UsuarioService() {
-        this.repositorio = Repositorio.getInstance();
+    public UsuarioService(UsuarioRepository usuarioRepository,
+                          OrganizadorRepository organizadorRepository) {
+        this.usuarioRepository = usuarioRepository;
+        this.organizadorRepository = organizadorRepository;
     }
 
     public UsuarioResponseDTO cadastrar(UsuarioRequestDTO dto) {
-        if (dto.getNome() == null || dto.getNome().trim().isEmpty()) {
-            throw new IllegalArgumentException("Nome é obrigatório");
-        }
-        if (dto.getDataNascimento() == null) {
-            throw new IllegalArgumentException("Data de nascimento é obrigatória");
-        }
-        if (dto.getSexo() == null || dto.getSexo().trim().isEmpty()) {
-            throw new IllegalArgumentException("Sexo é obrigatório");
-        }
-        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("Email é obrigatório");
-        }
-        if (dto.getSenha() == null || dto.getSenha().trim().isEmpty()) {
-            throw new IllegalArgumentException("Senha é obrigatória");
-        }
+        validarCamposObrigatorios(dto);
 
-        if (repositorio.existeUsuarioComEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Já existe um usuário cadastrado com este e-mail: " + dto.getEmail());
+        if (usuarioRepository.existsByEmail(dto.getEmail())) {
+            throw new EmailJaCadastradoException(dto.getEmail(), "usuário");
         }
-        if (repositorio.existeOrganizadorComEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Este e-mail já está cadastrado como organizador: " + dto.getEmail());
+        if (organizadorRepository.existsByEmail(dto.getEmail())) {
+            throw new EmailJaCadastradoException(dto.getEmail(), "organizador");
         }
 
         Usuario usuario = UsuarioMapper.toModel(dto);
-        repositorio.salvarUsuario(usuario);
-
+        usuarioRepository.save(usuario);
         return UsuarioMapper.toResponse(usuario);
     }
 
     public UsuarioResponseDTO alterar(long usuarioId, UsuarioRequestDTO dto) {
-        Usuario usuarioExistente = repositorio.buscarUsuarioPorId(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + usuarioId));
+        Usuario usuarioExistente = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário", usuarioId));
 
         if (!usuarioExistente.getEmail().equals(dto.getEmail())) {
-            throw new IllegalArgumentException("Não é permitido alterar o e-mail do usuário");
+            throw new RegraDeNegocioException("Não é permitido alterar o e-mail do usuário.");
         }
 
         UsuarioMapper.updateModel(dto, usuarioExistente);
-        repositorio.salvarUsuario(usuarioExistente);
-
+        usuarioRepository.save(usuarioExistente);
         return UsuarioMapper.toResponse(usuarioExistente);
     }
 
     public UsuarioResponseDTO buscarPorId(long usuarioId) {
-        Usuario usuario = repositorio.buscarUsuarioPorId(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + usuarioId));
-
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário", usuarioId));
         return UsuarioMapper.toResponse(usuario);
     }
 
     public void alterarStatus(long usuarioId, String status) {
-        Usuario usuario = repositorio.buscarUsuarioPorId(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + usuarioId));
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário", usuarioId));
 
         if ("ativar".equalsIgnoreCase(status)) {
             usuario.setAtivo(true);
         } else if ("desativar".equalsIgnoreCase(status)) {
             usuario.setAtivo(false);
         } else {
-            throw new IllegalArgumentException("Status inválido. Use 'ativar' ou 'desativar'");
+            throw new RegraDeNegocioException("Status inválido. Use 'ativar' ou 'desativar'.");
         }
 
-        repositorio.salvarUsuario(usuario);
+        usuarioRepository.save(usuario);
+    }
+
+    private void validarCamposObrigatorios(UsuarioRequestDTO dto) {
+        if (dto.getNome() == null || dto.getNome().trim().isEmpty())
+            throw new RegraDeNegocioException("Nome é obrigatório.");
+        if (dto.getDataNascimento() == null)
+            throw new RegraDeNegocioException("Data de nascimento é obrigatória.");
+        if (dto.getSexo() == null || dto.getSexo().trim().isEmpty())
+            throw new RegraDeNegocioException("Sexo é obrigatório.");
+        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty())
+            throw new RegraDeNegocioException("Email é obrigatório.");
+        if (dto.getSenha() == null || dto.getSenha().trim().isEmpty())
+            throw new RegraDeNegocioException("Senha é obrigatória.");
     }
 }
