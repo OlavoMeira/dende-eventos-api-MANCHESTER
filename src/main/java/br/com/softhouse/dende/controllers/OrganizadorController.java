@@ -5,6 +5,7 @@ import br.com.dende.softhouse.annotations.request.*;
 import br.com.dende.softhouse.process.route.ResponseEntity;
 import br.com.softhouse.dende.dto.request.OrganizadorRequestDTO;
 import br.com.softhouse.dende.dto.response.OrganizadorResponseDTO;
+import br.com.softhouse.dende.exceptions.*;
 import br.com.softhouse.dende.services.OrganizadorService;
 
 @Controller
@@ -13,8 +14,8 @@ public class OrganizadorController {
 
     private final OrganizadorService organizadorService;
 
-    public OrganizadorController() {
-        this.organizadorService = new OrganizadorService();
+    public OrganizadorController(OrganizadorService organizadorService) {
+        this.organizadorService = organizadorService;
     }
 
     @PostMapping
@@ -22,7 +23,7 @@ public class OrganizadorController {
         try {
             OrganizadorResponseDTO response = organizadorService.cadastrar(dto);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (EmailJaCadastradoException | RegraDeNegocioException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -34,7 +35,7 @@ public class OrganizadorController {
         try {
             OrganizadorResponseDTO response = organizadorService.alterar(organizadorId, dto);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -45,7 +46,7 @@ public class OrganizadorController {
         try {
             OrganizadorResponseDTO response = organizadorService.buscarPorId(organizadorId);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -57,7 +58,8 @@ public class OrganizadorController {
         try {
             organizadorService.alterarStatus(organizadorId, status);
             return ResponseEntity.ok("Status do organizador atualizado com sucesso!");
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException
+                 | OrganizadorComEventosAtivosException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }

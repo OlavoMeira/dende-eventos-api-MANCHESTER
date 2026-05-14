@@ -5,6 +5,7 @@ import br.com.dende.softhouse.annotations.request.*;
 import br.com.dende.softhouse.process.route.ResponseEntity;
 import br.com.softhouse.dende.dto.request.IngressoRequestDTO;
 import br.com.softhouse.dende.dto.response.IngressoResponseDTO;
+import br.com.softhouse.dende.exceptions.*;
 import br.com.softhouse.dende.services.IngressoService;
 
 import java.util.List;
@@ -14,8 +15,8 @@ public class IngressoController {
 
     private final IngressoService ingressoService;
 
-    public IngressoController() {
-        this.ingressoService = new IngressoService();
+    public IngressoController(IngressoService ingressoService) {
+        this.ingressoService = ingressoService;
     }
 
     @PostMapping(path = "/organizadores/{organizadorId}/eventos/{eventoId}/ingressos")
@@ -26,7 +27,8 @@ public class IngressoController {
         try {
             IngressoResponseDTO response = ingressoService.comprar(organizadorId, eventoId, dto);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException
+                 | EventoLotadoException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -38,7 +40,8 @@ public class IngressoController {
         try {
             IngressoResponseDTO response = ingressoService.cancelar(usuarioId, ingressoId);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException
+                 | IngressoJaCanceladoException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -49,7 +52,7 @@ public class IngressoController {
         try {
             List<IngressoResponseDTO> response = ingressoService.listarDoUsuario(usuarioId);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }

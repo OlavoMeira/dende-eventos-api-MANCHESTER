@@ -5,6 +5,7 @@ import br.com.dende.softhouse.annotations.request.*;
 import br.com.dende.softhouse.process.route.ResponseEntity;
 import br.com.softhouse.dende.dto.request.EventoRequestDTO;
 import br.com.softhouse.dende.dto.response.EventoResponseDTO;
+import br.com.softhouse.dende.exceptions.*;
 import br.com.softhouse.dende.services.EventoService;
 
 import java.util.List;
@@ -15,8 +16,8 @@ public class EventoController {
 
     private final EventoService eventoService;
 
-    public EventoController() {
-        this.eventoService = new EventoService();
+    public EventoController(EventoService eventoService) {
+        this.eventoService = eventoService;
     }
 
     @PostMapping(path = "/{organizadorId}/eventos")
@@ -26,7 +27,7 @@ public class EventoController {
         try {
             EventoResponseDTO response = eventoService.cadastrar(organizadorId, dto);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -39,7 +40,7 @@ public class EventoController {
         try {
             EventoResponseDTO response = eventoService.alterar(organizadorId, eventoId, dto);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -52,7 +53,7 @@ public class EventoController {
         try {
             eventoService.alterarStatus(organizadorId, eventoId, status);
             return ResponseEntity.ok("Status do evento atualizado com sucesso!");
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -63,7 +64,7 @@ public class EventoController {
         try {
             List<EventoResponseDTO> response = eventoService.listarDoOrganizador(organizadorId);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }

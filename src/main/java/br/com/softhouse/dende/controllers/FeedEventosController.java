@@ -15,8 +15,8 @@ public class FeedEventosController {
 
     private final EventoService eventoService;
 
-    public FeedEventosController() {
-        this.eventoService = new EventoService();
+    public FeedEventosController(EventoService eventoService) {
+        this.eventoService = eventoService;
     }
 
     @GetMapping

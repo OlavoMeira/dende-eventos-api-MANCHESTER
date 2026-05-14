@@ -5,6 +5,7 @@ import br.com.dende.softhouse.annotations.request.*;
 import br.com.dende.softhouse.process.route.ResponseEntity;
 import br.com.softhouse.dende.dto.request.UsuarioRequestDTO;
 import br.com.softhouse.dende.dto.response.UsuarioResponseDTO;
+import br.com.softhouse.dende.exceptions.*;
 import br.com.softhouse.dende.services.UsuarioService;
 
 @Controller
@@ -13,8 +14,8 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    public UsuarioController() {
-        this.usuarioService = new UsuarioService();
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
     }
 
     @PostMapping
@@ -22,7 +23,7 @@ public class UsuarioController {
         try {
             UsuarioResponseDTO response = usuarioService.cadastrar(dto);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (EmailJaCadastradoException | RegraDeNegocioException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -34,7 +35,7 @@ public class UsuarioController {
         try {
             UsuarioResponseDTO response = usuarioService.alterar(usuarioId, dto);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -45,7 +46,7 @@ public class UsuarioController {
         try {
             UsuarioResponseDTO response = usuarioService.buscarPorId(usuarioId);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
@@ -57,7 +58,7 @@ public class UsuarioController {
         try {
             usuarioService.alterarStatus(usuarioId, status);
             return ResponseEntity.ok("Status do usuário atualizado com sucesso!");
-        } catch (IllegalArgumentException e) {
+        } catch (RecursoNaoEncontradoException | RegraDeNegocioException e) {
             return ResponseEntity.ok("ERRO: " + e.getMessage());
         }
     }
