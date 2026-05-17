@@ -23,6 +23,7 @@ public class Evento {
     private Integer capacidadeMaxima;
     private Double precoUnitarioIngresso;
     private Double taxaCancelamento;
+    private boolean estornaIngresso;
     private boolean ativo;
 
     private Organizador organizador;
@@ -147,6 +148,9 @@ public class Evento {
     public void setTaxaCancelamento(Double taxaCancelamento) {
         this.taxaCancelamento = (taxaCancelamento != null) ? taxaCancelamento : 0.0;
     }
+
+    public boolean isEstornaIngresso() { return estornaIngresso; }
+    public void setEstornaIngresso(boolean estornaIngresso) { this.estornaIngresso = estornaIngresso; }
 
     public boolean isAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }

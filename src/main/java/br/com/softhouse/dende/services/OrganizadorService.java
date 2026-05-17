@@ -3,22 +3,21 @@ package br.com.softhouse.dende.services;
 import br.com.dende.softhouse.annotations.Component;
 import br.com.softhouse.dende.dto.request.OrganizadorRequestDTO;
 import br.com.softhouse.dende.dto.response.OrganizadorResponseDTO;
-import br.com.softhouse.dende.exceptions.*;
+import br.com.softhouse.dende.exceptions.EmailJaCadastradoException;
+import br.com.softhouse.dende.exceptions.RecursoNaoEncontradoException;
+import br.com.softhouse.dende.exceptions.RegraDeNegocioException;
+import br.com.softhouse.dende.exceptions.OrganizadorComEventosAtivosException;
 import br.com.softhouse.dende.mapper.OrganizadorMapper;
 import br.com.softhouse.dende.model.Organizador;
 import br.com.softhouse.dende.repositories.OrganizadorRepository;
-import br.com.softhouse.dende.repositories.UsuarioRepository;
 
 @Component
 public class OrganizadorService {
 
     private final OrganizadorRepository organizadorRepository;
-    private final UsuarioRepository usuarioRepository;
 
-    public OrganizadorService(OrganizadorRepository organizadorRepository,
-                              UsuarioRepository usuarioRepository) {
+    public OrganizadorService(OrganizadorRepository organizadorRepository) {
         this.organizadorRepository = organizadorRepository;
-        this.usuarioRepository = usuarioRepository;
     }
 
     public OrganizadorResponseDTO cadastrar(OrganizadorRequestDTO dto) {
@@ -27,26 +26,24 @@ public class OrganizadorService {
         if (organizadorRepository.existsByEmail(dto.getEmail())) {
             throw new EmailJaCadastradoException(dto.getEmail(), "organizador");
         }
-        if (usuarioRepository.existsByEmail(dto.getEmail())) {
-            throw new EmailJaCadastradoException(dto.getEmail(), "usuário");
-        }
 
         Organizador organizador = OrganizadorMapper.toModel(dto);
+        organizador.setTipoUsuario("ORGANIZADOR");
         organizadorRepository.save(organizador);
         return OrganizadorMapper.toResponse(organizador);
     }
 
     public OrganizadorResponseDTO alterar(long organizadorId, OrganizadorRequestDTO dto) {
-        Organizador existente = organizadorRepository.findById(organizadorId)
+        Organizador organizadorExistente = organizadorRepository.findById(organizadorId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Organizador", organizadorId));
 
-        if (!existente.getEmail().equals(dto.getEmail())) {
+        if (!organizadorExistente.getEmail().equals(dto.getEmail())) {
             throw new RegraDeNegocioException("Não é permitido alterar o e-mail do organizador.");
         }
 
-        OrganizadorMapper.updateModel(dto, existente);
-        organizadorRepository.save(existente);
-        return OrganizadorMapper.toResponse(existente);
+        OrganizadorMapper.updateModel(dto, organizadorExistente);
+        organizadorRepository.save(organizadorExistente);
+        return OrganizadorMapper.toResponse(organizadorExistente);
     }
 
     public OrganizadorResponseDTO buscarPorId(long organizadorId) {

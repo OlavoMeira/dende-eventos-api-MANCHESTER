@@ -11,6 +11,7 @@ public class Usuario {
     private String sexo;
     private String email;
     private String senha;
+    private String tipoUsuario;
     private boolean ativo;
 
     public Usuario() {
@@ -83,6 +84,14 @@ public class Usuario {
     }
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+
+    public String getTipoUsuario() {
+        return tipoUsuario;
+    }
+
+    public void setTipoUsuario(String tipoUsuario) {
+        this.tipoUsuario = tipoUsuario;
     }
 
     @Override

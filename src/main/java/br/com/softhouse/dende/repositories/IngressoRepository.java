@@ -28,14 +28,13 @@ public class IngressoRepository implements CrudRepository<Ingresso, Long> {
         this.eventoRepository = eventoRepository;
     }
 
-    // RowMapper interno
     private Ingresso mapRow(ResultSet rs) throws SQLException {
         Ingresso ingresso = new Ingresso();
         ingresso.setId(rs.getLong("id"));
         ingresso.setValorPago(rs.getDouble("valor_pago"));
 
-        double valorReembolsado = rs.getDouble("valor_reembolsado");
-        ingresso.setValorReembolsado(rs.wasNull() ? null : valorReembolsado);
+        double valorEstornado = rs.getDouble("valor_estornado");
+        ingresso.setValorReembolsado(rs.wasNull() ? null : valorEstornado);
 
         String statusStr = rs.getString("status");
         if (statusStr != null) {
@@ -109,13 +108,25 @@ public class IngressoRepository implements CrudRepository<Ingresso, Long> {
     }
 
     @Override
-    public boolean existsById(Long aLong) {
-        return false;
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(*) FROM ingresso WHERE id = ?";
+        try (Connection conn = connectionPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+
+        } catch (SQLException e) {
+            throw new DatabaseOperationException("Erro ao verificar existência de ingresso.", e);
+        }
     }
 
     @Override
     public List<Ingresso> findAllAtivos() {
-        return List.of();
+        String sql = "SELECT * FROM ingresso WHERE status = 'ATIVO' ORDER BY data_compra DESC";
+        return executarListagem(sql);
     }
 
     public List<Ingresso> findByUsuarioId(Long usuarioId) {
@@ -126,7 +137,7 @@ public class IngressoRepository implements CrudRepository<Ingresso, Long> {
                 WHERE i.usuario_id = ?
                 ORDER BY
                     CASE
-                        WHEN i.status = 'ATIVO' AND e.ativo = true AND e.data_fim > NOW()
+                        WHEN i.status = 'ATIVO' AND e.ativo = 1 AND e.data_fim > NOW()
                         THEN 0 ELSE 1
                     END,
                     e.data_inicio,
@@ -205,8 +216,7 @@ public class IngressoRepository implements CrudRepository<Ingresso, Long> {
     private Ingresso insert(Ingresso ingresso) {
         String sql = """
                 INSERT INTO ingresso
-                    (usuario_id, evento_id, data_compra, valor_pago,
-                     valor_reembolsado, data_cancelamento, status)
+                    (usuario_id, evento_id, valor_pago, status, valor_estornado, data_compra, data_cancelamento)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
@@ -231,9 +241,9 @@ public class IngressoRepository implements CrudRepository<Ingresso, Long> {
     private Ingresso update(Ingresso ingresso) {
         String sql = """
                 UPDATE ingresso
-                SET usuario_id = ?, evento_id = ?, data_compra = ?,
-                    valor_pago = ?, valor_reembolsado = ?,
-                    data_cancelamento = ?, status = ?
+                SET usuario_id = ?, evento_id = ?, valor_pago = ?,
+                    status = ?, valor_estornado = ?,
+                    data_compra = ?, data_cancelamento = ?
                 WHERE id = ?
                 """;
 
@@ -255,28 +265,28 @@ public class IngressoRepository implements CrudRepository<Ingresso, Long> {
         if (i.getUsuario() != null && i.getUsuario().getId() != null) {
             ps.setLong(1, i.getUsuario().getId());
         } else {
-            ps.setNull(1, Types.BIGINT);
+            throw new DatabaseOperationException("Usuário é obrigatório para o ingresso.");
         }
 
         if (i.getEvento() != null && i.getEvento().getId() != null) {
             ps.setLong(2, i.getEvento().getId());
         } else {
-            ps.setNull(2, Types.BIGINT);
+            throw new DatabaseOperationException("Evento é obrigatório para o ingresso.");
         }
 
-        ps.setTimestamp(3, i.getDataCompra() != null
-                ? Timestamp.valueOf(i.getDataCompra()) : null);
-        ps.setDouble(4, i.getValorPago() != null ? i.getValorPago() : 0.0);
+        ps.setDouble(3, i.getValorPago() != null ? i.getValorPago() : 0.0);
+        ps.setString(4, i.getStatus() != null ? i.getStatus().name() : "ATIVO");
 
         if (i.getValorReembolsado() != null) {
             ps.setDouble(5, i.getValorReembolsado());
         } else {
-            ps.setNull(5, Types.DOUBLE);
+            ps.setDouble(5, 0.0);
         }
 
-        ps.setTimestamp(6, i.getDataCancelamento() != null
+        ps.setTimestamp(6, i.getDataCompra() != null
+                ? Timestamp.valueOf(i.getDataCompra()) : new Timestamp(System.currentTimeMillis()));
+        ps.setTimestamp(7, i.getDataCancelamento() != null
                 ? Timestamp.valueOf(i.getDataCancelamento()) : null);
-        ps.setString(7, i.getStatus() != null ? i.getStatus().name() : StatusIngresso.ATIVO.name());
     }
 
     private List<Ingresso> executarListagem(String sql) {

@@ -8,7 +8,6 @@ import br.com.softhouse.dende.repositories.util.CrudRepository;
 import br.com.softhouse.dende.repositories.util.ConnectionPool;
 
 import java.sql.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +17,10 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
 
     private final ConnectionPool connectionPool;
 
+    public UsuarioRepository(ConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
+    }
+
     private Usuario mapRow(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();
         u.setId(rs.getLong("id"));
@@ -25,6 +28,7 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
         u.setSexo(rs.getString("sexo"));
         u.setEmail(rs.getString("email"));
         u.setSenha(rs.getString("senha"));
+        u.setTipoUsuario(rs.getString("tipo_usuario"));
         u.setAtivo(rs.getBoolean("ativo"));
 
         Date dataNasc = rs.getDate("data_nascimento");
@@ -32,10 +36,6 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
             u.setDataNascimento(dataNasc.toLocalDate());
         }
         return u;
-    }
-
-    public UsuarioRepository(ConnectionPool connectionPool) {
-        this.connectionPool = connectionPool;
     }
 
     @Override
@@ -98,13 +98,37 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
     }
 
     @Override
-    public boolean existsById(Long aLong) {
-        return false;
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(*) FROM usuario WHERE id = ?";
+        try (Connection conn = connectionPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+
+        } catch (SQLException e) {
+            throw new DatabaseOperationException("Erro ao verificar existência de usuário.", e);
+        }
     }
 
     @Override
     public List<Usuario> findAllAtivos() {
-        return List.of();
+        String sql = "SELECT * FROM usuario WHERE ativo = 1 ORDER BY nome";
+        List<Usuario> lista = new ArrayList<>();
+        try (Connection conn = connectionPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(mapRow(rs));
+            }
+            return lista;
+
+        } catch (SQLException e) {
+            throw new DatabaseOperationException("Erro ao listar usuários ativos.", e);
+        }
     }
 
     public Optional<Usuario> findByEmail(String email) {
@@ -144,8 +168,9 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
         validarEmailUnico(usuario.getEmail(), null);
 
         String sql = """
-                INSERT INTO usuario (nome, data_nascimento, sexo, email, senha, ativo)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO usuario
+                    (nome, data_nascimento, sexo, email, senha, tipo_usuario, ativo)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = connectionPool.getConnection();
@@ -171,7 +196,8 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
 
         String sql = """
                 UPDATE usuario
-                SET nome = ?, data_nascimento = ?, sexo = ?, email = ?, senha = ?, ativo = ?
+                SET nome = ?, data_nascimento = ?, sexo = ?, email = ?,
+                    senha = ?, tipo_usuario = ?, ativo = ?
                 WHERE id = ?
                 """;
 
@@ -179,12 +205,13 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             preencherStatement(ps, usuario);
-            ps.setLong(7, usuario.getId());
+            ps.setLong(8, usuario.getId());
             ps.executeUpdate();
             return usuario;
 
         } catch (SQLException e) {
-            throw new DatabaseOperationException("Erro ao atualizar usuário com id: " + usuario.getId(), e);
+            throw new DatabaseOperationException(
+                    "Erro ao atualizar usuário com id: " + usuario.getId(), e);
         }
     }
 
@@ -193,12 +220,13 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
         if (u.getDataNascimento() != null) {
             ps.setDate(2, Date.valueOf(u.getDataNascimento()));
         } else {
-            ps.setNull(2, Types.DATE);
+            throw new DatabaseOperationException("Data de nascimento é obrigatória.");
         }
         ps.setString(3, u.getSexo());
         ps.setString(4, u.getEmail());
         ps.setString(5, u.getSenha());
-        ps.setBoolean(6, u.isAtivo());
+        ps.setString(6, u.getTipoUsuario() != null ? u.getTipoUsuario() : "COMUM");
+        ps.setInt(7, u.isAtivo() ? 1 : 0);
     }
 
     private void validarEmailUnico(String email, Long ignorarId) {
@@ -213,7 +241,6 @@ public class UsuarioRepository implements CrudRepository<Usuario, Long> {
             if (ignorarId != null) {
                 ps.setLong(2, ignorarId);
             }
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next() && rs.getInt(1) > 0) {
                     throw new EmailJaCadastradoException(email, "usuário");

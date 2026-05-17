@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class EmpresaRepository implements CrudRepository<Empresa, String> {
+public class EmpresaRepository implements CrudRepository<Empresa, Long> {
 
     private final ConnectionPool connectionPool;
 
@@ -22,32 +22,29 @@ public class EmpresaRepository implements CrudRepository<Empresa, String> {
 
     private Empresa mapRow(ResultSet rs) throws SQLException {
         Empresa e = new Empresa();
+        e.setId(rs.getLong("id"));
+        e.setOrganizadorId(rs.getLong("organizador_id"));
         e.setCnpj(rs.getString("cnpj"));
         e.setRazaoSocial(rs.getString("razao_social"));
         e.setNomeFantasia(rs.getString("nome_fantasia"));
-
-        Date dataAbertura = rs.getDate("data_abertura");
-        if (dataAbertura != null) {
-            e.setDataAbertura(dataAbertura.toLocalDate());
-        }
         return e;
     }
 
     @Override
     public Empresa save(Empresa empresa) {
-        if (existsByCnpj(empresa.getCnpj())) {
-            return update(empresa);
+        if (empresa.getId() == null) {
+            return insert(empresa);
         }
-        return insert(empresa);
+        return update(empresa);
     }
 
     @Override
-    public Optional<Empresa> findById(String cnpj) {
-        String sql = "SELECT * FROM empresa WHERE cnpj = ?";
+    public Optional<Empresa> findById(Long id) {
+        String sql = "SELECT * FROM empresa WHERE id = ?";
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, cnpj);
+            ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(mapRow(rs));
@@ -56,7 +53,25 @@ public class EmpresaRepository implements CrudRepository<Empresa, String> {
             return Optional.empty();
 
         } catch (SQLException e) {
-            throw new DatabaseOperationException("Erro ao buscar empresa por CNPJ: " + cnpj, e);
+            throw new DatabaseOperationException("Erro ao buscar empresa por ID: " + id, e);
+        }
+    }
+
+    public Optional<Empresa> findByOrganizadorId(Long organizadorId) {
+        String sql = "SELECT * FROM empresa WHERE organizador_id = ?";
+        try (Connection conn = connectionPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, organizadorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
+            }
+            return Optional.empty();
+
+        } catch (SQLException e) {
+            throw new DatabaseOperationException("Erro ao buscar empresa por organizador: " + organizadorId, e);
         }
     }
 
@@ -79,54 +94,60 @@ public class EmpresaRepository implements CrudRepository<Empresa, String> {
     }
 
     @Override
-    public void deleteById(String cnpj) {
-        String sql = "DELETE FROM empresa WHERE cnpj = ?";
+    public void deleteById(Long id) {
+        String sql = "DELETE FROM empresa WHERE id = ?";
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, cnpj);
+            ps.setLong(1, id);
             ps.executeUpdate();
 
         } catch (SQLException e) {
-            throw new DatabaseOperationException("Erro ao deletar empresa com CNPJ: " + cnpj, e);
+            throw new DatabaseOperationException("Erro ao deletar empresa com ID: " + id, e);
         }
     }
 
     @Override
-    public boolean existsById(String s) {
-        return false;
-    }
-
-    @Override
-    public List<Empresa> findAllAtivos() {
-        return List.of();
-    }
-
-    public boolean existsByCnpj(String cnpj) {
-        String sql = "SELECT COUNT(*) FROM empresa WHERE cnpj = ?";
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(*) FROM empresa WHERE id = ?";
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, cnpj);
+            ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }
 
         } catch (SQLException e) {
-            throw new DatabaseOperationException("Erro ao verificar CNPJ de empresa.", e);
+            throw new DatabaseOperationException("Erro ao verificar existência de empresa.", e);
         }
+    }
+
+    @Override
+    public List<Empresa> findAllAtivos() {
+        return findAll();
     }
 
     private Empresa insert(Empresa empresa) {
         String sql = """
-                INSERT INTO empresa (cnpj, razao_social, nome_fantasia, data_abertura)
+                INSERT INTO empresa (organizador_id, cnpj, razao_social, nome_fantasia)
                 VALUES (?, ?, ?, ?)
                 """;
         try (Connection conn = connectionPool.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preencherStatement(ps, empresa);
+            ps.setLong(1, empresa.getOrganizadorId());
+            ps.setString(2, empresa.getCnpj());
+            ps.setString(3, empresa.getRazaoSocial());
+            ps.setString(4, empresa.getNomeFantasia());
+            
             ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    empresa.setId(keys.getLong(1));
+                }
+            }
             return empresa;
 
         } catch (SQLException e) {
@@ -137,36 +158,23 @@ public class EmpresaRepository implements CrudRepository<Empresa, String> {
     private Empresa update(Empresa empresa) {
         String sql = """
                 UPDATE empresa
-                SET razao_social = ?, nome_fantasia = ?, data_abertura = ?
-                WHERE cnpj = ?
+                SET organizador_id = ?, cnpj = ?, razao_social = ?, nome_fantasia = ?
+                WHERE id = ?
                 """;
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, empresa.getRazaoSocial());
-            ps.setString(2, empresa.getNomeFantasia());
-            if (empresa.getDataAbertura() != null) {
-                ps.setDate(3, Date.valueOf(empresa.getDataAbertura()));
-            } else {
-                ps.setNull(3, Types.DATE);
-            }
-            ps.setString(4, empresa.getCnpj());
+            ps.setLong(1, empresa.getOrganizadorId());
+            ps.setString(2, empresa.getCnpj());
+            ps.setString(3, empresa.getRazaoSocial());
+            ps.setString(4, empresa.getNomeFantasia());
+            ps.setLong(5, empresa.getId());
+            
             ps.executeUpdate();
             return empresa;
 
         } catch (SQLException e) {
-            throw new DatabaseOperationException("Erro ao atualizar empresa com CNPJ: " + empresa.getCnpj(), e);
-        }
-    }
-
-    private void preencherStatement(PreparedStatement ps, Empresa empresa) throws SQLException {
-        ps.setString(1, empresa.getCnpj());
-        ps.setString(2, empresa.getRazaoSocial());
-        ps.setString(3, empresa.getNomeFantasia());
-        if (empresa.getDataAbertura() != null) {
-            ps.setDate(4, Date.valueOf(empresa.getDataAbertura()));
-        } else {
-            ps.setNull(4, Types.DATE);
+            throw new DatabaseOperationException("Erro ao atualizar empresa com ID: " + empresa.getId(), e);
         }
     }
 }

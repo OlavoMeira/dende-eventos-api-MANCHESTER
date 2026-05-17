@@ -1,23 +1,37 @@
 package br.com.softhouse.dende.model;
 
-import java.time.LocalDate;
 import java.util.Objects;
 
 public class Empresa {
 
+    private Long id;
+    private Long organizadorId;
     private String cnpj;
     private String razaoSocial;
     private String nomeFantasia;
-    private LocalDate dataAbertura;
 
-    public Empresa(String cnpj, String razaoSocial, String nomeFantasia, LocalDate dataAbertura) {
+    public Empresa(String cnpj, String razaoSocial, String nomeFantasia, Long organizadorId) {
         this.cnpj = cnpj;
         this.razaoSocial = razaoSocial;
         this.nomeFantasia = nomeFantasia;
-        this.dataAbertura = dataAbertura;
+        this.organizadorId = organizadorId;
     }
 
     public Empresa() {}
+
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getOrganizadorId() {
+        return organizadorId;
+    }
+    public void setOrganizadorId(Long organizadorId) {
+        this.organizadorId = organizadorId;
+    }
 
     public String getCnpj() {
         return cnpj;
@@ -38,13 +52,6 @@ public class Empresa {
     }
     public void setNomeFantasia(String nomeFantasia) {
         this.nomeFantasia = nomeFantasia;
-    }
-
-    public LocalDate getDataAbertura() {
-        return dataAbertura;
-    }
-    public void setDataAbertura(LocalDate dataAbertura) {
-        this.dataAbertura = dataAbertura;
     }
 
     @Override

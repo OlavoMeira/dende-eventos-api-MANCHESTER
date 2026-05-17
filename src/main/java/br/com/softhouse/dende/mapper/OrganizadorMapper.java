@@ -7,78 +7,56 @@ import br.com.softhouse.dende.model.Organizador;
 
 public class OrganizadorMapper {
 
-    private OrganizadorMapper() {
-
-    }
-
-    
     public static Organizador toModel(OrganizadorRequestDTO dto) {
-        if (dto == null) return null;
-
-        Organizador organizador = new Organizador();
-        organizador.setNome(dto.getNome());
-        organizador.setDataNascimento(dto.getDataNascimento());
-        organizador.setSexo(dto.getSexo());
-        organizador.setEmail(dto.getEmail());
-        organizador.setSenha(dto.getSenha());
+        Organizador o = new Organizador();
+        o.setNome(dto.getNome());
+        o.setDataNascimento(dto.getDataNascimento());
+        o.setSexo(dto.getSexo());
+        o.setEmail(dto.getEmail());
+        o.setSenha(dto.getSenha());
+        o.setAtivo(true);
+        o.setTipoUsuario("ORGANIZADOR");
 
         if (dto.getCnpj() != null && !dto.getCnpj().trim().isEmpty()) {
-            Empresa empresa = new Empresa(
-                    dto.getCnpj(),
-                    dto.getRazaoSocial(),
-                    dto.getNomeFantasia(),
-                    null
-            );
-            organizador.setEmpresa(empresa);
+            o.setEmpresa(new Empresa(dto.getCnpj(), dto.getRazaoSocial(), dto.getNomeFantasia(), null));
         }
-
-        return organizador;
+        return o;
     }
 
-    
-    public static void updateModel(OrganizadorRequestDTO dto, Organizador organizadorExistente) {
-        if (dto == null || organizadorExistente == null) return;
-
-        organizadorExistente.setNome(dto.getNome());
-        organizadorExistente.setDataNascimento(dto.getDataNascimento());
-        organizadorExistente.setSexo(dto.getSexo());
-
-        if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
-            organizadorExistente.setSenha(dto.getSenha());
-        }
+    public static void updateModel(OrganizadorRequestDTO dto, Organizador o) {
+        o.setNome(dto.getNome());
+        o.setDataNascimento(dto.getDataNascimento());
+        o.setSexo(dto.getSexo());
+        o.setSenha(dto.getSenha());
 
         if (dto.getCnpj() != null && !dto.getCnpj().trim().isEmpty()) {
-            Empresa empresa = organizadorExistente.getEmpresa() != null
-                    ? organizadorExistente.getEmpresa()
-                    : new Empresa();
-            empresa.setCnpj(dto.getCnpj());
-            empresa.setRazaoSocial(dto.getRazaoSocial());
-            empresa.setNomeFantasia(dto.getNomeFantasia());
-            organizadorExistente.setEmpresa(empresa);
+            if (o.getEmpresa() == null) {
+                o.setEmpresa(new Empresa(dto.getCnpj(), dto.getRazaoSocial(), dto.getNomeFantasia(), o.getId()));
+            } else {
+                o.getEmpresa().setCnpj(dto.getCnpj());
+                o.getEmpresa().setRazaoSocial(dto.getRazaoSocial());
+                o.getEmpresa().setNomeFantasia(dto.getNomeFantasia());
+            }
+        } else {
+            o.setEmpresa(null);
         }
     }
 
-    
-    public static OrganizadorResponseDTO toResponse(Organizador organizador) {
-        if (organizador == null) return null;
-
+    public static OrganizadorResponseDTO toResponse(Organizador o) {
         OrganizadorResponseDTO dto = new OrganizadorResponseDTO();
-        dto.setId(organizador.getId());
-        dto.setNome(organizador.getNome());
-        dto.setDataNascimento(organizador.getDataNascimento() != null
-                ? organizador.getDataNascimento().toString() : null);
-        dto.setIdadeCompleta(organizador.getIdadeCompleta());
-        dto.setSexo(organizador.getSexo());
-        dto.setEmail(organizador.getEmail());
-        dto.setAtivo(organizador.isAtivo());
+        dto.setId(o.getId());
+        dto.setNome(o.getNome());
+        dto.setDataNascimento(o.getDataNascimento() != null ? o.getDataNascimento().toString() : null);
+        dto.setSexo(o.getSexo());
+        dto.setEmail(o.getEmail());
+        dto.setAtivo(o.isAtivo());
 
-        if (organizador.isEmpresa()) {
-            OrganizadorResponseDTO.EmpresaResponseDTO empresaDTO =
-                    new OrganizadorResponseDTO.EmpresaResponseDTO();
-            empresaDTO.setCnpj(organizador.getCnpj());
-            empresaDTO.setRazaoSocial(organizador.getRazaoSocial());
-            empresaDTO.setNomeFantasia(organizador.getNomeFantasia());
-            dto.setEmpresa(empresaDTO);
+        if (o.isEmpresa()) {
+            OrganizadorResponseDTO.EmpresaResponseDTO empresaDto = new OrganizadorResponseDTO.EmpresaResponseDTO();
+            empresaDto.setCnpj(o.getEmpresa().getCnpj());
+            empresaDto.setRazaoSocial(o.getEmpresa().getRazaoSocial());
+            empresaDto.setNomeFantasia(o.getEmpresa().getNomeFantasia());
+            dto.setEmpresa(empresaDto);
         }
 
         return dto;

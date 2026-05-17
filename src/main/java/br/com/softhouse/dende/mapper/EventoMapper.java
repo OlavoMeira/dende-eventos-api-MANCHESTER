@@ -26,6 +26,7 @@ public class EventoMapper {
         evento.setCapacidadeMaxima(dto.getCapacidadeMaxima());
         evento.setPrecoUnitarioIngresso(dto.getPrecoUnitarioIngresso());
         evento.setTaxaCancelamento(dto.getTaxaCancelamento());
+        evento.setEstornaIngresso(dto.isEstornaIngresso());
         return evento;
     }
 
@@ -44,7 +45,7 @@ public class EventoMapper {
         eventoExistente.setCapacidadeMaxima(dto.getCapacidadeMaxima());
         eventoExistente.setPrecoUnitarioIngresso(dto.getPrecoUnitarioIngresso());
         eventoExistente.setTaxaCancelamento(dto.getTaxaCancelamento());
-
+        eventoExistente.setEstornaIngresso(dto.isEstornaIngresso());
     }
 
     

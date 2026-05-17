@@ -1,99 +1,29 @@
 package br.com.softhouse.dende.model;
 
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.Objects;
 
-public class Organizador {
-    private Long id;
-    private String nome;
-    private LocalDate dataNascimento;
-    private String sexo;
-    private String email;
-    private String senha;
-    private boolean ativo;
+public class Organizador extends Usuario {
 
     private Empresa empresa;
 
     public Organizador() {
-        this.ativo = true;
+        super();
     }
 
 
     public Organizador(String nome, LocalDate dataNascimento, String sexo, String email,
                        String senha, String cnpj, String razaoSocial, String nomeFantasia) {
-        this.nome = nome;
-        this.dataNascimento = dataNascimento;
-        this.sexo = sexo;
-        this.email = email;
-        this.senha = senha;
-        this.ativo = true;
+        super(nome, dataNascimento, sexo, email, senha);
+        setTipoUsuario("ORGANIZADOR");
 
         if (cnpj != null && !cnpj.trim().isEmpty()) {
             this.empresa = new Empresa(cnpj, razaoSocial, nomeFantasia, null);
         }
     }
 
-    public String getIdadeCompleta() {
-        if (dataNascimento == null) return "";
-        LocalDate hoje = LocalDate.now();
-        Period periodo = Period.between(dataNascimento, hoje);
-        return String.format("%d anos, %d meses e %d dias",
-                periodo.getYears(), periodo.getMonths(), periodo.getDays());
-    }
-
     public boolean isEmpresa() {
         return this.empresa != null && this.empresa.getCnpj() != null;
-    }
-
-    
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public LocalDate getDataNascimento() {
-        return dataNascimento;
-    }
-    public void setDataNascimento(LocalDate dataNascimento) {
-        this.dataNascimento = dataNascimento;
-    }
-
-    public String getSexo() {
-        return sexo;
-    }
-    public void setSexo(String sexo) {
-        this.sexo = sexo;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getSenha() {
-        return senha;
-    }
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
-
-    public boolean isAtivo() {
-        return ativo;
-    }
-    public void setAtivo(boolean ativo) {
-        this.ativo = ativo;
     }
 
     public Empresa getEmpresa() {
@@ -121,20 +51,20 @@ public class Organizador {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Organizador that = (Organizador) o;
-        return Objects.equals(email, that.email);
+        return Objects.equals(getEmail(), that.getEmail());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(email);
+        return Objects.hash(getEmail());
     }
 
     @Override
     public String toString() {
         return "Organizador{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", email='" + email + '\'' +
+                "id=" + getId() +
+                ", nome='" + getNome() + '\'' +
+                ", email='" + getEmail() + '\'' +
                 ", empresa=" + (isEmpresa() ? empresa.getCnpj() : "N/A") +
                 '}';
     }

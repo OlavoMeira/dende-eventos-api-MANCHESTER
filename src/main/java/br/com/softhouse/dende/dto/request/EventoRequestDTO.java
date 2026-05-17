@@ -18,6 +18,7 @@ public class EventoRequestDTO {
     private Integer capacidadeMaxima;
     private Double precoUnitarioIngresso;
     private Double taxaCancelamento;
+    private boolean estornaIngresso;
 
     private Long eventoPrincipalId;
 
@@ -55,6 +56,9 @@ public class EventoRequestDTO {
 
     public Double getTaxaCancelamento() { return taxaCancelamento; }
     public void setTaxaCancelamento(Double taxaCancelamento) { this.taxaCancelamento = taxaCancelamento; }
+
+    public boolean isEstornaIngresso() { return estornaIngresso; }
+    public void setEstornaIngresso(boolean estornaIngresso) { this.estornaIngresso = estornaIngresso; }
 
     public Long getEventoPrincipalId() { return eventoPrincipalId; }
     public void setEventoPrincipalId(Long eventoPrincipalId) { this.eventoPrincipalId = eventoPrincipalId; }

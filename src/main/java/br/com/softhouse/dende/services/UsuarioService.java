@@ -6,19 +6,15 @@ import br.com.softhouse.dende.dto.response.UsuarioResponseDTO;
 import br.com.softhouse.dende.exceptions.*;
 import br.com.softhouse.dende.mapper.UsuarioMapper;
 import br.com.softhouse.dende.model.Usuario;
-import br.com.softhouse.dende.repositories.OrganizadorRepository;
 import br.com.softhouse.dende.repositories.UsuarioRepository;
 
 @Component
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final OrganizadorRepository organizadorRepository;
 
-    public UsuarioService(UsuarioRepository usuarioRepository,
-                          OrganizadorRepository organizadorRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
-        this.organizadorRepository = organizadorRepository;
     }
 
     public UsuarioResponseDTO cadastrar(UsuarioRequestDTO dto) {
@@ -27,11 +23,9 @@ public class UsuarioService {
         if (usuarioRepository.existsByEmail(dto.getEmail())) {
             throw new EmailJaCadastradoException(dto.getEmail(), "usuário");
         }
-        if (organizadorRepository.existsByEmail(dto.getEmail())) {
-            throw new EmailJaCadastradoException(dto.getEmail(), "organizador");
-        }
 
         Usuario usuario = UsuarioMapper.toModel(dto);
+        usuario.setTipoUsuario("COMUM");
         usuarioRepository.save(usuario);
         return UsuarioMapper.toResponse(usuario);
     }

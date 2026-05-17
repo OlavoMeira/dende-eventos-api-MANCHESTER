@@ -5,12 +5,10 @@ import br.com.softhouse.dende.enums.ModalidadeEvento;
 import br.com.softhouse.dende.enums.TipoEvento;
 import br.com.softhouse.dende.exceptions.DatabaseOperationException;
 import br.com.softhouse.dende.model.Evento;
-import br.com.softhouse.dende.model.Organizador;
 import br.com.softhouse.dende.repositories.util.CrudRepository;
 import br.com.softhouse.dende.repositories.util.ConnectionPool;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,8 +31,8 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
                 .nome(rs.getString("nome"))
                 .paginaWeb(rs.getString("pagina_web"))
                 .descricao(rs.getString("descricao"))
-                .local(rs.getString("local"))
-                .ativo(rs.getBoolean("ativo"));
+                .local(rs.getString("local_evento"))
+                .ativo(rs.getInt("ativo") == 1);
 
         Timestamp dataInicio = rs.getTimestamp("data_inicio");
         if (dataInicio != null) builder.dataInicio(dataInicio.toLocalDateTime());
@@ -49,16 +47,19 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
         if (modalidadeStr != null) builder.modalidade(ModalidadeEvento.valueOf(modalidadeStr));
 
         builder.capacidadeMaxima(rs.getInt("capacidade_maxima"));
-        builder.precoUnitarioIngresso(rs.getDouble("preco_unitario_ingresso"));
-        builder.taxaCancelamento(rs.getDouble("taxa_cancelamento"));
+        builder.precoUnitarioIngresso(rs.getDouble("preco_ingresso"));
+        builder.taxaCancelamento(rs.getDouble("taxa_estorno"));
+
+        Evento evento = builder.build();
+        evento.setEstornaIngresso(rs.getInt("estorna_ingresso") == 1);
 
         long organizadorId = rs.getLong("organizador_id");
         if (!rs.wasNull()) {
             organizadorRepository.findById(organizadorId)
-                    .ifPresent(builder::organizador);
+                    .ifPresent(evento::setOrganizador);
         }
 
-        return builder.build();
+        return evento;
     }
 
     @Override
@@ -112,13 +113,25 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
     }
 
     @Override
-    public boolean existsById(Long aLong) {
-        return false;
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(*) FROM evento WHERE id = ?";
+        try (Connection conn = connectionPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+
+        } catch (SQLException e) {
+            throw new DatabaseOperationException("Erro ao verificar existência de evento.", e);
+        }
     }
 
     @Override
     public List<Evento> findAllAtivos() {
-        return List.of();
+        String sql = "SELECT * FROM evento WHERE ativo = 1 ORDER BY data_inicio";
+        return executarListagem(sql);
     }
 
     public List<Evento> findByOrganizadorId(Long organizadorId) {
@@ -142,7 +155,7 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
                 FROM evento e
                 LEFT JOIN ingresso i
                     ON i.evento_id = e.id AND i.status = 'ATIVO'
-                WHERE e.ativo = true
+                WHERE e.ativo = 1
                   AND e.data_fim > NOW()
                 GROUP BY e.id
                 HAVING vagas > 0
@@ -163,13 +176,13 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
                 UPDATE ingresso
                 SET status = 'CANCELADO',
                     data_cancelamento = NOW(),
-                    valor_reembolsado = valor_pago * ?
+                    valor_estornado = valor_pago * ?
                 WHERE evento_id = ? AND status = 'ATIVO'
                 """;
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setDouble(1, 1.0 - taxaCancelamento);
+            ps.setDouble(1, taxaCancelamento / 100.0);
             ps.setLong(2, eventoId);
             ps.executeUpdate();
 
@@ -179,18 +192,13 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
         }
     }
 
-    public boolean organizadorTemEventosAtivos(Long organizadorId) {
-        return organizadorRepository.possuiEventosAtivos(organizadorId);
-    }
-
     private Evento insert(Evento evento) {
         String sql = """
                 INSERT INTO evento
-                    (nome, pagina_web, descricao, data_inicio, data_fim,
-                     tipo_evento, modalidade, local, capacidade_maxima,
-                     preco_unitario_ingresso, taxa_cancelamento, ativo,
-                     organizador_id, evento_principal_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (organizador_id, evento_principal_id, nome, descricao, pagina_web,
+                     tipo_evento, modalidade, local_evento, data_inicio, data_fim,
+                     capacidade_maxima, preco_ingresso, estorna_ingresso, taxa_estorno, ativo)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = connectionPool.getConnection();
@@ -214,10 +222,10 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
     private Evento update(Evento evento) {
         String sql = """
                 UPDATE evento
-                SET nome = ?, pagina_web = ?, descricao = ?, data_inicio = ?, data_fim = ?,
-                    tipo_evento = ?, modalidade = ?, local = ?, capacidade_maxima = ?,
-                    preco_unitario_ingresso = ?, taxa_cancelamento = ?, ativo = ?,
-                    organizador_id = ?, evento_principal_id = ?
+                SET organizador_id = ?, evento_principal_id = ?, nome = ?, descricao = ?,
+                    pagina_web = ?, tipo_evento = ?, modalidade = ?, local_evento = ?,
+                    data_inicio = ?, data_fim = ?, capacidade_maxima = ?, preco_ingresso = ?,
+                    estorna_ingresso = ?, taxa_estorno = ?, ativo = ?
                 WHERE id = ?
                 """;
 
@@ -225,7 +233,7 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             preencherStatement(ps, evento);
-            ps.setLong(15, evento.getId());
+            ps.setLong(16, evento.getId());
             ps.executeUpdate();
             return evento;
 
@@ -236,34 +244,33 @@ public class EventoRepository implements CrudRepository<Evento, Long> {
     }
 
     private void preencherStatement(PreparedStatement ps, Evento e) throws SQLException {
-        ps.setString(1, e.getNome());
-        ps.setString(2, e.getPaginaWeb());
-        ps.setString(3, e.getDescricao());
-
-        ps.setTimestamp(4, e.getDataInicio() != null
-                ? Timestamp.valueOf(e.getDataInicio()) : null);
-        ps.setTimestamp(5, e.getDataFim() != null
-                ? Timestamp.valueOf(e.getDataFim()) : null);
-
-        ps.setString(6, e.getTipoEvento() != null ? e.getTipoEvento().name() : null);
-        ps.setString(7, e.getModalidade() != null ? e.getModalidade().name() : null);
-        ps.setString(8, e.getLocal());
-        ps.setInt(9, e.getCapacidadeMaxima() != null ? e.getCapacidadeMaxima() : 0);
-        ps.setDouble(10, e.getPrecoUnitarioIngresso() != null ? e.getPrecoUnitarioIngresso() : 0.0);
-        ps.setDouble(11, e.getTaxaCancelamento() != null ? e.getTaxaCancelamento() : 0.0);
-        ps.setBoolean(12, e.isAtivo());
-
         if (e.getOrganizador() != null && e.getOrganizador().getId() != null) {
-            ps.setLong(13, e.getOrganizador().getId());
+            ps.setLong(1, e.getOrganizador().getId());
         } else {
-            ps.setNull(13, Types.BIGINT);
+            throw new DatabaseOperationException("Organizador é obrigatório para o evento.");
         }
 
         if (e.getEventoPrincipal() != null && e.getEventoPrincipal().getId() != null) {
-            ps.setLong(14, e.getEventoPrincipal().getId());
+            ps.setLong(2, e.getEventoPrincipal().getId());
         } else {
-            ps.setNull(14, Types.BIGINT);
+            ps.setNull(2, Types.BIGINT);
         }
+
+        ps.setString(3, e.getNome());
+        ps.setString(4, e.getDescricao());
+        ps.setString(5, e.getPaginaWeb());
+        ps.setString(6, e.getTipoEvento() != null ? e.getTipoEvento().name() : null);
+        ps.setString(7, e.getModalidade() != null ? e.getModalidade().name() : null);
+        ps.setString(8, e.getLocal());
+
+        ps.setTimestamp(9, e.getDataInicio() != null ? Timestamp.valueOf(e.getDataInicio()) : null);
+        ps.setTimestamp(10, e.getDataFim() != null ? Timestamp.valueOf(e.getDataFim()) : null);
+
+        ps.setInt(11, e.getCapacidadeMaxima() != null ? e.getCapacidadeMaxima() : 0);
+        ps.setDouble(12, e.getPrecoUnitarioIngresso() != null ? e.getPrecoUnitarioIngresso() : 0.0);
+        ps.setInt(13, e.isEstornaIngresso() ? 1 : 0);
+        ps.setDouble(14, e.getTaxaCancelamento() != null ? e.getTaxaCancelamento() : 0.0);
+        ps.setInt(15, e.isAtivo() ? 1 : 0);
     }
 
     private void loadEventoPrincipal(Evento evento, long principalId, boolean wasNull) {

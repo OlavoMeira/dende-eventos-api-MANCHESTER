@@ -3,7 +3,6 @@ package br.com.softhouse.dende.repositories;
 import br.com.dende.softhouse.annotations.Component;
 import br.com.softhouse.dende.exceptions.DatabaseOperationException;
 import br.com.softhouse.dende.exceptions.EmailJaCadastradoException;
-import br.com.softhouse.dende.model.Empresa;
 import br.com.softhouse.dende.model.Organizador;
 import br.com.softhouse.dende.repositories.util.CrudRepository;
 import br.com.softhouse.dende.repositories.util.ConnectionPool;
@@ -12,7 +11,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 
 @Component
 public class OrganizadorRepository implements CrudRepository<Organizador, Long> {
@@ -33,6 +31,7 @@ public class OrganizadorRepository implements CrudRepository<Organizador, Long> 
         o.setSexo(rs.getString("sexo"));
         o.setEmail(rs.getString("email"));
         o.setSenha(rs.getString("senha"));
+        o.setTipoUsuario(rs.getString("tipo_usuario"));
         o.setAtivo(rs.getBoolean("ativo"));
 
         Date dataNasc = rs.getDate("data_nascimento");
@@ -40,29 +39,31 @@ public class OrganizadorRepository implements CrudRepository<Organizador, Long> 
             o.setDataNascimento(dataNasc.toLocalDate());
         }
 
-        String cnpj = rs.getString("empresa_cnpj");
-        if (cnpj != null && !cnpj.isBlank()) {
-            empresaRepository.findById(cnpj).ifPresent(o::setEmpresa);
-        }
+        empresaRepository.findByOrganizadorId(o.getId()).ifPresent(o::setEmpresa);
+        
         return o;
     }
 
     @Override
     public Organizador save(Organizador organizador) {
-        // Persiste a empresa primeiro (se existir)
-        if (organizador.getEmpresa() != null) {
-            empresaRepository.save(organizador.getEmpresa());
+        organizador.setTipoUsuario("ORGANIZADOR");
+        if (organizador.getId() == null) {
+            insert(organizador);
+        } else {
+            update(organizador);
         }
 
-        if (organizador.getId() == null) {
-            return insert(organizador);
+        if (organizador.getEmpresa() != null) {
+            organizador.getEmpresa().setOrganizadorId(organizador.getId());
+            empresaRepository.save(organizador.getEmpresa());
         }
-        return update(organizador);
+        
+        return organizador;
     }
 
     @Override
     public Optional<Organizador> findById(Long id) {
-        String sql = "SELECT * FROM organizador WHERE id = ?";
+        String sql = "SELECT * FROM usuario WHERE id = ? AND tipo_usuario = 'ORGANIZADOR'";
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -81,7 +82,7 @@ public class OrganizadorRepository implements CrudRepository<Organizador, Long> 
 
     @Override
     public List<Organizador> findAll() {
-        String sql = "SELECT * FROM organizador ORDER BY nome";
+        String sql = "SELECT * FROM usuario WHERE tipo_usuario = 'ORGANIZADOR' ORDER BY nome";
         List<Organizador> lista = new ArrayList<>();
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -99,7 +100,7 @@ public class OrganizadorRepository implements CrudRepository<Organizador, Long> 
 
     @Override
     public void deleteById(Long id) {
-        String sql = "DELETE FROM organizador WHERE id = ?";
+        String sql = "DELETE FROM usuario WHERE id = ? AND tipo_usuario = 'ORGANIZADOR'";
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -112,17 +113,41 @@ public class OrganizadorRepository implements CrudRepository<Organizador, Long> 
     }
 
     @Override
-    public boolean existsById(Long aLong) {
-        return false;
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(*) FROM usuario WHERE id = ? AND tipo_usuario = 'ORGANIZADOR'";
+        try (Connection conn = connectionPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+
+        } catch (SQLException e) {
+            throw new DatabaseOperationException("Erro ao verificar existência de organizador.", e);
+        }
     }
 
     @Override
     public List<Organizador> findAllAtivos() {
-        return List.of();
+        String sql = "SELECT * FROM usuario WHERE tipo_usuario = 'ORGANIZADOR' AND ativo = 1 ORDER BY nome";
+        List<Organizador> lista = new ArrayList<>();
+        try (Connection conn = connectionPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(mapRow(rs));
+            }
+            return lista;
+
+        } catch (SQLException e) {
+            throw new DatabaseOperationException("Erro ao listar organizadores ativos.", e);
+        }
     }
 
     public Optional<Organizador> findByEmail(String email) {
-        String sql = "SELECT * FROM organizador WHERE email = ?";
+        String sql = "SELECT * FROM usuario WHERE email = ? AND tipo_usuario = 'ORGANIZADOR'";
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -140,7 +165,7 @@ public class OrganizadorRepository implements CrudRepository<Organizador, Long> 
     }
 
     public boolean existsByEmail(String email) {
-        String sql = "SELECT COUNT(*) FROM organizador WHERE email = ?";
+        String sql = "SELECT COUNT(*) FROM usuario WHERE email = ?";
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -175,54 +200,52 @@ public class OrganizadorRepository implements CrudRepository<Organizador, Long> 
         }
     }
 
-    private Organizador insert(Organizador organizador) {
-        validarEmailUnico(organizador.getEmail(), null);
+    private void insert(Organizador o) {
+        validarEmailUnico(o.getEmail(), null);
 
         String sql = """
-                INSERT INTO organizador
-                    (nome, data_nascimento, sexo, email, senha, ativo, empresa_cnpj)
+                INSERT INTO usuario
+                    (nome, data_nascimento, sexo, email, senha, tipo_usuario, ativo)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preencherStatement(ps, organizador);
+            preencherStatement(ps, o);
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) {
-                    organizador.setId(keys.getLong(1));
+                    o.setId(keys.getLong(1));
                 }
             }
-            return organizador;
 
         } catch (SQLException e) {
             throw new DatabaseOperationException("Erro ao inserir organizador.", e);
         }
     }
 
-    private Organizador update(Organizador organizador) {
-        validarEmailUnico(organizador.getEmail(), organizador.getId());
+    private void update(Organizador o) {
+        validarEmailUnico(o.getEmail(), o.getId());
 
         String sql = """
-                UPDATE organizador
+                UPDATE usuario
                 SET nome = ?, data_nascimento = ?, sexo = ?, email = ?,
-                    senha = ?, ativo = ?, empresa_cnpj = ?
+                    senha = ?, tipo_usuario = ?, ativo = ?
                 WHERE id = ?
                 """;
 
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            preencherStatement(ps, organizador);
-            ps.setLong(8, organizador.getId());
+            preencherStatement(ps, o);
+            ps.setLong(8, o.getId());
             ps.executeUpdate();
-            return organizador;
 
         } catch (SQLException e) {
             throw new DatabaseOperationException(
-                    "Erro ao atualizar organizador com id: " + organizador.getId(), e);
+                    "Erro ao atualizar organizador com id: " + o.getId(), e);
         }
     }
 
@@ -231,25 +254,19 @@ public class OrganizadorRepository implements CrudRepository<Organizador, Long> 
         if (o.getDataNascimento() != null) {
             ps.setDate(2, Date.valueOf(o.getDataNascimento()));
         } else {
-            ps.setNull(2, Types.DATE);
+            throw new DatabaseOperationException("Data de nascimento é obrigatória.");
         }
         ps.setString(3, o.getSexo());
         ps.setString(4, o.getEmail());
         ps.setString(5, o.getSenha());
-        ps.setBoolean(6, o.isAtivo());
-
-        Empresa empresa = o.getEmpresa();
-        if (empresa != null && empresa.getCnpj() != null) {
-            ps.setString(7, empresa.getCnpj());
-        } else {
-            ps.setNull(7, Types.VARCHAR);
-        }
+        ps.setString(6, "ORGANIZADOR");
+        ps.setInt(7, o.isAtivo() ? 1 : 0);
     }
 
     private void validarEmailUnico(String email, Long ignorarId) {
         String sql = ignorarId == null
-                ? "SELECT COUNT(*) FROM organizador WHERE email = ?"
-                : "SELECT COUNT(*) FROM organizador WHERE email = ? AND id <> ?";
+                ? "SELECT COUNT(*) FROM usuario WHERE email = ?"
+                : "SELECT COUNT(*) FROM usuario WHERE email = ? AND id <> ?";
 
         try (Connection conn = connectionPool.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
