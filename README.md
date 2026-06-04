@@ -1,145 +1,104 @@
-# 🌴 Dendê Eventos API
+# 🎉 Dendê Eventos API — Time Manchester
 
-## 📌 Sobre a Dendê Softhouse
-
-A **Dendê Softhouse** é uma empresa baiana de desenvolvimento de software, situada na **Avenida Tancredo Neves, nº 1186, Edifício Catuca, bairro Caminho das Árvores, Salvador – BA, CEP 41820-020**.
-
-Com foco em **soluções digitais de impacto local**, a empresa tem como seu principal produto o **Dendê Eventos**, um aplicativo voltado à **divulgação, organização e gestão de eventos culturais, acadêmicos e sociais**, conectando organizadores e público de forma simples e eficiente.
-
-Neste ano, a Dendê Softhouse inicia o seu **programa de trainee Dendezeiros**.  
-Parabéns por terem sido aprovados! 🌱
-
-Vocês serão integrados aos times de:
-
-- 📊 Dados
-- 📱 Desenvolvimento Mobile Nativo
-- 🌐 Desenvolvimento Web
-
-E farão parte do time técnico responsável pelo desenvolvimento da **nova versão do Dendê Eventos**.
+API REST para gerenciamento de eventos, construída com **Spring Boot 3.2** e documentada com **Swagger (OpenAPI 3)**.
 
 ---
 
-## 🚀 Sobre o Projeto
+## 🚀 Como executar
 
-A **`dende-eventos-api`** é uma API REST responsável por gerenciar usuários, eventos e ingressos da plataforma Dendê Eventos.
+### Pré-requisitos
+- Java 17+
+- Maven 3.8+
 
-Este projeto utiliza como dependência o **`dendeframework`**, um **framework web desenvolvido em Java com fins educacionais**, criado para apoiar o aprendizado de boas práticas no desenvolvimento de **APIs REST**, como:
+### Rodando localmente
 
-- Organização de código
-- Padronização de endpoints
-- Uso de HTTP Methods
-- Aplicação de regras de negócio
-- Estruturação de projetos backend
+```bash
+git clone https://github.com/seu-usuario/dende-eventos-spring-api-manchester.git
+cd dende-eventos-spring-api-manchester
+mvn spring-boot:run
+```
 
----
+A API estará disponível em: `http://localhost:8080`
 
-## 🧩 Dependência Principal
+### Swagger UI
 
-Este projeto depende do framework educacional:
+Acesse a documentação interativa em:  
+📄 `http://localhost:8080/swagger-ui.html`
 
-- **dendeframework** – Framework web Java desenvolvido para fins didáticos no desenvolvimento de APIs REST.
+### H2 Console (banco em memória)
 
----
-
-## 👥 Equipe
-
-> Preencha esta seção com as informações do seu time
-
-**Nome da Equipe:**  
-
-
-**Integrantes do Time:**
-
-1. _Olavo Barros Meira Filho___________________________________
-2. ___________________________________
-3. _Ian Dias Duque___________________________________
-4. ____________________________________
-5. ____________________________________
+Acesse o banco de dados em:  
+🗄️ `http://localhost:8080/h2-console`  
+JDBC URL: `jdbc:h2:mem:dende_eventos_db`
 
 ---
 
-## 📚 Histórias do Usuário Atendidas
+## 📋 Endpoints
 
-A API foi construída com base nas seguintes **User Stories**:
+### Eventos — `/api/v1/eventos`
 
-### 👤 Usuários
-- Cadastro de usuário comum
-- Cadastro de usuário organizador
-- Alteração de perfil
-- Visualização de perfil
-- Desativação de usuário
-- Reativação de usuário
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/v1/eventos` | Listar todos (filtro por status opcional) |
+| GET | `/api/v1/eventos/com-vagas` | Listar eventos com vagas |
+| GET | `/api/v1/eventos/{id}` | Buscar por ID |
+| POST | `/api/v1/eventos` | Criar novo evento |
+| PUT | `/api/v1/eventos/{id}` | Atualizar evento |
+| PATCH | `/api/v1/eventos/{id}/cancelar` | Cancelar evento |
+| DELETE | `/api/v1/eventos/{id}` | Excluir evento |
 
-### 📅 Eventos
-- Cadastro de evento
-- Alteração de evento
-- Ativação de evento
-- Desativação de evento
-- Listagem de eventos do organizador
-- Feed de eventos ativos
+### Participantes — `/api/v1`
 
-### 🎟️ Ingressos
-- Compra de ingresso
-- Cancelamento de ingresso
-- Listagem de ingressos do usuário
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/v1/eventos/{eventoId}/participantes` | Listar participantes do evento |
+| GET | `/api/v1/participantes/{id}` | Buscar participante por ID |
+| POST | `/api/v1/eventos/{eventoId}/participantes` | Inscrever participante |
+| DELETE | `/api/v1/participantes/{id}` | Cancelar inscrição |
 
 ---
 
-## 🔗 Resumo dos Endpoints da API
+## 🏗️ Arquitetura
 
-### 👤 Usuários
-
-| Método | Endpoint | Descrição |
-|------|---------|----------|
-| POST | `/usuarios` | Cadastro de usuário comum |
-| PUT | `/usuarios/{usuarioId}` | Alterar dados do usuário |
-| GET | `/usuarios/{usuarioId}` | Visualizar perfil do usuário |
-| PATCH | `/usuarios/{usuarioId}/{status}` | Ativar ou desativar usuário |
-
----
-
-### 🧑‍💼 Organizadores
-
-| Método | Endpoint | Descrição |
-|------|---------|----------|
-| POST | `/organizadores` | Cadastro de usuário organizador |
-| PUT | `/organizadores/{organizadorId}` | Alterar dados do organizador |
-| GET | `/organizadores/{organizadorId}` | Visualizar perfil do organizador |
-| PATCH | `/organizadores/{organizadorId}/{status}` | Ativar ou desativar organizador |
+```
+src/main/java/com/dende/eventos/
+├── controller/         # Controllers REST + anotações Swagger
+├── service/            # Regras de negócio
+├── repository/         # Interfaces JPA
+├── model/              # Entidades JPA (Evento, Participante, StatusEvento)
+├── dto/                # Data Transfer Objects (Request / Response)
+├── exception/          # Exceções customizadas + GlobalExceptionHandler
+└── config/             # OpenAPI / Swagger config
+```
 
 ---
 
-### 📅 Eventos
+## 🔧 Tecnologias
 
-| Método | Endpoint | Descrição |
-|------|---------|----------|
-| POST | `/organizadores/{organizadorId}/eventos` | Cadastrar evento |
-| PUT | `/organizadores/{organizadorId}/eventos/{eventoId}` | Alterar evento |
-| PATCH | `/organizadores/{organizadorId}/eventos/{status}` | Ativar ou desativar evento |
-| GET | `/organizadores/{organizadorId}/eventos` | Listar eventos do organizador |
-| GET | `/eventos` | Feed de eventos ativos |
-
----
-
-### 🎟️ Ingressos
-
-| Método | Endpoint | Descrição |
-|------|---------|----------|
-| POST | `/organizadores/{organizadorId}/eventos/{eventoId}/ingressos` | Comprar ingresso |
-| POST | `/usuarios/{usuarioId}/ingressos/{ingressoId}` | Cancelar ingresso |
-| GET | `/usuarios/{usuarioId}/ingressos` | Listar ingressos do usuário |
+| Tecnologia | Versão | Uso |
+|------------|--------|-----|
+| Java | 17 | Linguagem |
+| Spring Boot | 3.2.5 | Framework principal |
+| Spring Data JPA | 3.2.5 | Persistência |
+| Hibernate | 6.x | ORM |
+| H2 | latest | Banco em memória (dev) |
+| PostgreSQL | latest | Banco de dados (produção) |
+| Springdoc OpenAPI | 2.5.0 | Swagger UI |
+| Lombok | latest | Redução de boilerplate |
+| Bean Validation | 3.x | Validação de dados |
 
 ---
 
-## 🧪 Testes e Documentação
+## 📌 Regras de Negócio
 
-Os endpoints da API podem ser testados utilizando a **collection do Postman** disponibilizada junto ao projeto, organizada de acordo com os domínios funcionais e histórias do usuário.
+- Um evento não pode ter data de fim anterior à data de início
+- Não é possível inscrever participantes em eventos **CANCELADOS**, **ENCERRADOS** ou **ESGOTADOS**
+- CPF e e-mail são únicos por evento (sem duplicatas)
+- Eventos com participantes não podem ser excluídos diretamente (devem ser cancelados primeiro)
+- Quando o último participante cancela inscrição em evento **ESGOTADO**, o status volta para **ATIVO**
 
 ---
 
-## 🌱 Considerações Finais
+## 👥 Time Manchester
 
-Este projeto possui **caráter educacional**, sendo parte do programa de formação da **Dendê Softhouse**.  
-O objetivo é aplicar conceitos de **desenvolvimento backend**, **boas práticas de APIs REST** e **trabalho em equipe**, preparando os participantes para desafios reais do mercado.
-
-Bom desenvolvimento e sejam bem-vindos à Dendê! 🌴🚀
+Projeto desenvolvido como entrega final do curso **Dendê Eventos**.
