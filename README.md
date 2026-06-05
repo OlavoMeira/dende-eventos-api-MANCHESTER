@@ -7,7 +7,7 @@ API REST para gerenciamento de eventos, construída com **Spring Boot 3.2** e do
 ## 🚀 Como executar
 
 ### Pré-requisitos
-- Java 17+
+- Java 21+
 - Maven 3.8+
 
 ### Rodando localmente
@@ -58,7 +58,31 @@ JDBC URL: `jdbc:h2:mem:dende_eventos_db`
 
 ---
 
-## 🏗️ Arquitetura
+## 🏗️ Arquitetura (Refatoração OAT 4)
+
+O projeto foi refatorado para utilizar exclusivamente o **Spring Boot 3**, conforme os requisitos da OAT 4. A estrutura duplicada e frameworks customizados foram removidos para garantir a consolidação dos conceitos de Spring Boot.
+
+### Estrutura de Pacotes:
+```
+src/main/java/com/dende/eventos/
+├── controller/         # Controllers REST + anotações Swagger
+├── service/            # Regras de negócio
+├── repository/         # Interfaces JPA
+├── model/              # Entidades JPA (Evento, Participante, StatusEvento)
+├── dto/                # Data Transfer Objects (Request / Response)
+├── exception/          # Exceções customizadas + GlobalExceptionHandler
+└── config/             # OpenAPI / Swagger config
+```
+
+### Principais Anotações Spring Boot Aplicadas:
+* `@SpringBootApplication`: Ponto de entrada e auto-configuração.
+* `@RestController`: Exposição de recursos RESTful.
+* `@Service` & `@Repository`: Camadas de lógica e persistência.
+* `@Transactional`: Garantia de integridade em operações complexas.
+* `@Valid`: Validação automática de contratos.
+* `@Bean`: Configuração customizada de componentes (OpenAPI).
+
+## 🏗️ Arquitetura Original (Removida)
 
 ```
 src/main/java/com/dende/eventos/

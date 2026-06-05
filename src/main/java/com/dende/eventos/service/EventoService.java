@@ -120,7 +120,6 @@ public class EventoService {
         eventoRepository.delete(evento);
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
 
     public Evento findOrThrow(Long id) {
         return eventoRepository.findById(id)

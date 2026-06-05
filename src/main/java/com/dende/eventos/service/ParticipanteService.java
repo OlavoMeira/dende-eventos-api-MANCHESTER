@@ -24,7 +24,7 @@ public class ParticipanteService {
 
     @Transactional(readOnly = true)
     public List<ParticipanteDTO.Response> listarPorEvento(Long eventoId) {
-        eventoService.findOrThrow(eventoId); // valida que evento existe
+        eventoService.findOrThrow(eventoId); 
         return participanteRepository.findByEventoId(eventoId)
                 .stream()
                 .map(this::toResponse)
@@ -46,9 +46,9 @@ public class ParticipanteService {
         }
 
         if (evento.getParticipantes().size() >= evento.getCapacidadeMaxima()) {
-            // Lança exceção sem tentar persistir — a lógica de marcar ESGOTADO
-            // deve ocorrer DENTRO de uma operação bem-sucedida (última vaga preenchida),
-            // não num caminho de erro. Aqui apenas informamos que está esgotado.
+
+
+
             throw new RegraDeNegocioException("Evento esgotado. Não há vagas disponíveis.");
         }
 
@@ -69,7 +69,6 @@ public class ParticipanteService {
 
         ParticipanteDTO.Response response = toResponse(participanteRepository.save(participante));
 
-        // Verifica se o evento atingiu a capacidade máxima após esta inscrição
         long totalInscritos = participanteRepository.findByEventoId(eventoId).size();
         if (totalInscritos >= evento.getCapacidadeMaxima()) {
             evento.setStatus(StatusEvento.ESGOTADO);
@@ -91,14 +90,12 @@ public class ParticipanteService {
 
         participanteRepository.delete(participante);
 
-        // Reabre vagas se o evento estava esgotado e agora há espaço
         if (evento.getStatus() == StatusEvento.ESGOTADO) {
             evento.setStatus(StatusEvento.ATIVO);
             eventoRepository.save(evento);
         }
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private Participante findOrThrow(Long id) {
         return participanteRepository.findById(id)
