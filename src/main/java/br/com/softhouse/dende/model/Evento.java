@@ -10,16 +10,17 @@ import java.util.List;
 import java.util.Objects;
 
 public class Evento {
+
     private Long id;
     private String nome;
-    private String paginaWeb; // Alinhado: Use "paginaWeb" no Postman
+    private String paginaWeb;
     private String descricao;
     private LocalDateTime dataInicio;
-    private LocalDateTime dataFim; // Alinhado: Use "dataFim" no Postman
+    private LocalDateTime dataFim;
     private TipoEvento tipoEvento;
     private ModalidadeEvento modalidade;
     private String local;
-    private Integer capacidadeMaxima; // Alinhado: Use "capacidadeMaxima" no Postman
+    private Integer capacidadeMaxima;
     private Double precoUnitarioIngresso;
     private Double taxaCancelamento;
     private boolean ativo;
@@ -29,7 +30,6 @@ public class Evento {
     private List<Evento> subEventos = new ArrayList<>();
     private List<Ingresso> ingressos = new ArrayList<>();
 
-    // Construtor corrigido com valores padrão para evitar erros de cálculo (NullPointer)
     public Evento() {
         this.ativo = true;
         this.capacidadeMaxima = 0;
@@ -37,10 +37,32 @@ public class Evento {
         this.taxaCancelamento = 0.0;
     }
 
-    public boolean isLotado() {
-        // Proteção: se capacidade for 0 ou nula, considera lotado para evitar erros
-        if (capacidadeMaxima == null || capacidadeMaxima <= 0) return true;
+    private Evento(EventoBuilder builder) {
+        this.id = builder.id;
+        this.nome = builder.nome;
+        this.paginaWeb = builder.paginaWeb;
+        this.descricao = builder.descricao;
+        this.dataInicio = builder.dataInicio;
+        this.dataFim = builder.dataFim;
+        this.tipoEvento = builder.tipoEvento;
+        this.modalidade = builder.modalidade;
+        this.local = builder.local;
+        this.capacidadeMaxima = builder.capacidadeMaxima != null ? builder.capacidadeMaxima : 0;
+        this.precoUnitarioIngresso = builder.precoUnitarioIngresso != null ? builder.precoUnitarioIngresso : 0.0;
+        this.taxaCancelamento = builder.taxaCancelamento != null ? builder.taxaCancelamento : 0.0;
+        this.ativo = builder.ativo;
+        this.organizador = builder.organizador;
+        this.eventoPrincipal = builder.eventoPrincipal;
+        this.ingressos = new ArrayList<>();
+        this.subEventos = new ArrayList<>();
+    }
 
+    public static EventoBuilder builder() {
+        return new EventoBuilder();
+    }
+
+    public boolean isLotado() {
+        if (capacidadeMaxima == null || capacidadeMaxima <= 0) return true;
         long ingressosAtivos = ingressos.stream()
                 .filter(i -> i.getStatus() == br.com.softhouse.dende.enums.StatusIngresso.ATIVO)
                 .count();
@@ -60,28 +82,15 @@ public class Evento {
 
     public boolean isValidoParaCadastro() {
         if (dataInicio == null || dataFim == null) return false;
-        
         LocalDateTime agora = LocalDateTime.now();
-
-        // Regra: Não pode criar evento no passado
-        if (dataInicio.isBefore(agora)) {
-            return false;
-        }
-
-        // Regra: Fim deve ser após o início
-        if (dataFim.isBefore(dataInicio)) {
-            return false;
-        }
-
-        // Regra: Duração mínima de 30 minutos
+        if (dataInicio.isBefore(agora)) return false;
+        if (dataFim.isBefore(dataInicio)) return false;
         Duration duracao = Duration.between(dataInicio, dataFim);
         return duracao.toMinutes() >= 30;
     }
 
     public void adicionarIngresso(Ingresso ingresso) {
-        if (ingressos == null) {
-            ingressos = new ArrayList<>();
-        }
+        if (ingressos == null) ingressos = new ArrayList<>();
         ingressos.add(ingresso);
     }
 
@@ -97,7 +106,6 @@ public class Evento {
         return capacidadeMaxima - getIngressosVendidos();
     }
 
-    // --- Getters e Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -126,7 +134,9 @@ public class Evento {
     public void setLocal(String local) { this.local = local; }
 
     public Integer getCapacidadeMaxima() { return capacidadeMaxima; }
-    public void setCapacidadeMaxima(Integer capacidadeMaxima) { this.capacidadeMaxima = (capacidadeMaxima != null) ? capacidadeMaxima : 0; }
+    public void setCapacidadeMaxima(Integer capacidadeMaxima) {
+        this.capacidadeMaxima = (capacidadeMaxima != null) ? capacidadeMaxima : 0;
+    }
 
     public Double getPrecoUnitarioIngresso() { return precoUnitarioIngresso; }
     public void setPrecoUnitarioIngresso(Double precoUnitarioIngresso) {
@@ -134,7 +144,9 @@ public class Evento {
     }
 
     public Double getTaxaCancelamento() { return taxaCancelamento; }
-    public void setTaxaCancelamento(Double taxaCancelamento) { this.taxaCancelamento = (taxaCancelamento != null) ? taxaCancelamento : 0.0; }
+    public void setTaxaCancelamento(Double taxaCancelamento) {
+        this.taxaCancelamento = (taxaCancelamento != null) ? taxaCancelamento : 0.0;
+    }
 
     public boolean isAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
@@ -160,17 +172,110 @@ public class Evento {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int hashCode() { return Objects.hash(id); }
 
     @Override
     public String toString() {
-        return "Evento{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", dataInicio=" + dataInicio +
-                ", ativo=" + ativo +
-                '}';
+        return "Evento{id=" + id + ", nome='" + nome + "', dataInicio=" + dataInicio + ", ativo=" + ativo + '}';
+    }
+
+    public static class EventoBuilder {
+
+        private Long id;
+        private String nome;
+        private String paginaWeb;
+        private String descricao;
+        private LocalDateTime dataInicio;
+        private LocalDateTime dataFim;
+        private TipoEvento tipoEvento;
+        private ModalidadeEvento modalidade;
+        private String local;
+        private Integer capacidadeMaxima;
+        private Double precoUnitarioIngresso;
+        private Double taxaCancelamento;
+        private boolean ativo = true;
+        private Organizador organizador;
+        private Evento eventoPrincipal;
+
+        private EventoBuilder() {}
+
+        public EventoBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public EventoBuilder nome(String nome) {
+            this.nome = nome;
+            return this;
+        }
+
+        public EventoBuilder paginaWeb(String paginaWeb) {
+            this.paginaWeb = paginaWeb;
+            return this;
+        }
+
+        public EventoBuilder descricao(String descricao) {
+            this.descricao = descricao;
+            return this;
+        }
+
+        public EventoBuilder dataInicio(LocalDateTime dataInicio) {
+            this.dataInicio = dataInicio;
+            return this;
+        }
+
+        public EventoBuilder dataFim(LocalDateTime dataFim) {
+            this.dataFim = dataFim;
+            return this;
+        }
+
+        public EventoBuilder tipoEvento(TipoEvento tipoEvento) {
+            this.tipoEvento = tipoEvento;
+            return this;
+        }
+
+        public EventoBuilder modalidade(ModalidadeEvento modalidade) {
+            this.modalidade = modalidade;
+            return this;
+        }
+
+        public EventoBuilder local(String local) {
+            this.local = local;
+            return this;
+        }
+
+        public EventoBuilder capacidadeMaxima(Integer capacidadeMaxima) {
+            this.capacidadeMaxima = capacidadeMaxima;
+            return this;
+        }
+
+        public EventoBuilder precoUnitarioIngresso(Double precoUnitarioIngresso) {
+            this.precoUnitarioIngresso = precoUnitarioIngresso;
+            return this;
+        }
+
+        public EventoBuilder taxaCancelamento(Double taxaCancelamento) {
+            this.taxaCancelamento = taxaCancelamento;
+            return this;
+        }
+
+        public EventoBuilder ativo(boolean ativo) {
+            this.ativo = ativo;
+            return this;
+        }
+
+        public EventoBuilder organizador(Organizador organizador) {
+            this.organizador = organizador;
+            return this;
+        }
+
+        public EventoBuilder eventoPrincipal(Evento eventoPrincipal) {
+            this.eventoPrincipal = eventoPrincipal;
+            return this;
+        }
+
+        public Evento build() {
+            return new Evento(this);
+        }
     }
 }
