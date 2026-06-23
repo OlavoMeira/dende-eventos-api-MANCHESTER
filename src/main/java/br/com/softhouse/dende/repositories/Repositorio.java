@@ -36,7 +36,6 @@ public class Repositorio {
         return instance;
     }
 
-    // Usuário methods
     public Usuario salvarUsuario(Usuario usuario) {
         if (usuario.getId() == null) {
             usuario.setId(usuarioIdCounter.getAndIncrement());
@@ -60,7 +59,6 @@ public class Repositorio {
                 .anyMatch(u -> u.getEmail().equals(email));
     }
 
-    // Organizador methods
     public Organizador salvarOrganizador(Organizador organizador) {
         if (organizador.getId() == null) {
             organizador.setId(organizadorIdCounter.getAndIncrement());
@@ -90,7 +88,6 @@ public class Repositorio {
                 .anyMatch(e -> e.isAtivo() && !e.isFinalizado());
     }
 
-    // Evento methods
     public Evento salvarEvento(Evento evento) {
         if (evento.getId() == null) {
             evento.setId(eventoIdCounter.getAndIncrement());
@@ -129,7 +126,6 @@ public class Repositorio {
         });
     }
 
-    // Ingresso methods
     public Ingresso salvarIngresso(Ingresso ingresso) {
         if (ingresso.getId() == null) {
             ingresso.setId(ingressoIdCounter.getAndIncrement());
