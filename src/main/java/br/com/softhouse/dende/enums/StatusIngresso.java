@@ -1,6 +1,6 @@
 package br.com.softhouse.dende.enums;
 
-public enum StatusEvento {
+public enum StatusIngresso {
     ATIVO,
-    INATIVO
+    CANCELADO
 }
